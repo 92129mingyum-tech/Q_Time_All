@@ -1,0 +1,40 @@
+name: Build and release Windows client
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Build Windows installer
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npm install --no-audit --no-fund
+          if ('${{ github.ref_type }}' -eq 'tag') {
+            $expected = 'v' + (Get-Content package.json -Raw | ConvertFrom-Json).version
+            if ('${{ github.ref_name }}' -ne $expected) { throw "버전 태그가 다릅니다: $expected" }
+            npm run release:win
+          } else {
+            npm run dist:win
+          }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Q-TIME-Windows
+          path: dist/Q-TIME-Setup-*.exe
+          if-no-files-found: error
