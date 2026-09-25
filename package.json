@@ -1,7 +1,7 @@
 {
   "name": "q-time-client",
   "productName": "Q-TIME",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Q-TIME desktop client",
   "main": "client/main.js",
   "private": true,

@@ -9,10 +9,10 @@ function sendUpdate(message) {
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 1000,
-    height: 650,
-    minWidth: 720,
-    minHeight: 480,
+    width: 1360,
+    height: 800,
+    minWidth: 960,
+    minHeight: 620,
     title: 'Q-TIME',
     backgroundColor: '#102544',
     webPreferences: {
