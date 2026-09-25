@@ -1,7 +1,7 @@
 {
   "name": "q-time-client",
   "productName": "Q-TIME",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Q-TIME desktop client",
   "main": "client/main.js",
   "private": true,
@@ -14,14 +14,33 @@
     "electron": "^33.4.11",
     "electron-builder": "^25.1.8"
   },
-  "dependencies": {"electron-updater": "^6.3.9"},
+  "dependencies": {
+    "electron-updater": "^6.3.9"
+  },
   "build": {
     "appId": "com.qtime.client",
     "productName": "Q-TIME",
-    "directories": {"output": "dist"},
-    "files": ["client/**/*", "package.json"],
-    "publish": [{"provider": "github", "owner": "92129mingyum-tech", "repo": "Q_Time_All"}],
-    "win": {"target": "nsis"},
-    "nsis": {"oneClick": false, "allowToChangeInstallationDirectory": true, "artifactName": "Q-TIME-Setup-${version}.${ext}"}
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "client/**/*",
+      "package.json"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "92129mingyum-tech",
+        "repo": "Q_Time_All"
+      }
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "Q-TIME-Setup-${version}.${ext}"
+    }
   }
 }
