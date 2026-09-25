@@ -27,12 +27,14 @@ jobs:
           npm install --no-audit --no-fund
           if ('${{ github.ref_type }}' -eq 'tag') {
             $expected = 'v' + (Get-Content package.json -Raw | ConvertFrom-Json).version
-            if ('${{ github.ref_name }}' -ne $expected) { throw "버전 태그가 다릅니다: $expected" }
-          npm run release:win
-        } elseif ('${{ github.event_name }}' -eq 'workflow_dispatch') {
-          npm run release:win
-        } else {
-          npm run dist:win
+            if ('${{ github.ref_name }}' -ne $expected) {
+              throw "버전 태그가 다릅니다: $expected"
+            }
+            npm run release:win
+          } elseif ('${{ github.event_name }}' -eq 'workflow_dispatch') {
+            npm run release:win
+          } else {
+            npm run dist:win
           }
 
       - uses: actions/upload-artifact@v4
