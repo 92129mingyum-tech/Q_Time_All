@@ -39,7 +39,7 @@ autoUpdater.on('update-available', info => sendUpdate(`v${info.version} 다운�
 autoUpdater.on('download-progress', progress => sendUpdate(`업데이트 다운로드 중: ${Math.floor(progress.percent)}%`));
 autoUpdater.on('update-downloaded', info => {
   sendUpdate(`v${info.version} 설치 준비 완료. 잠시 후 다시 실행됩니다.`);
-  setTimeout(() => autoUpdater.quitAndInstall(false, true), 2000);
+  setTimeout(() => autoUpdater.quitAndInstall(true, true), 2000);
 });
 autoUpdater.on('error', error => sendUpdate(`업데이트 오류: ${error.message}`));
 

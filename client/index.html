@@ -1,14 +1,481 @@
 <!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'"><title>Q-TIME</title>
-<style>
-*{box-sizing:border-box}body{margin:0;min-width:960px;min-height:100vh;font-family:'Malgun Gothic',Arial,sans-serif;color:#182c3d;background:#193650;background-image:linear-gradient(90deg,#ffffff07 1px,transparent 1px),linear-gradient(#ffffff07 1px,transparent 1px);background-size:27px 27px}button,input{font:inherit}button{cursor:pointer;border:1px solid #829db3;border-radius:9px;background:linear-gradient(#f8fcff,#b9ccdc);color:#182c41;padding:9px 12px;font-weight:700;box-shadow:0 2px 2px #0a23385c}button:hover{filter:brightness(1.08)}button:focus-visible,input:focus-visible{outline:3px solid #39c9ff;outline-offset:2px}.orange{color:#36200a;border-color:#bd710c;background:linear-gradient(#ffd15b,#f39811)}.teal{color:white;border-color:#237c90;background:linear-gradient(#42b3ba,#157886)}.top{height:94px;padding:15px 20px;display:flex;align-items:center;gap:10px;color:#f4faff;background:linear-gradient(110deg,#173953,#315f80 60%,#204968);border-bottom:2px solid #8aafc9}.logo{margin-right:auto;white-space:nowrap;line-height:1;font-weight:1000;font-style:italic;letter-spacing:-3px;font-size:44px;color:#fff;text-shadow:3px 3px #0b1730,-2px -2px #69c9ff,4px 5px #172b4d}.logo .q{color:#ffbc36;text-shadow:3px 3px #142744,-2px -2px #fff}.logo small{display:block;text-align:right;font-size:12px;font-style:normal;letter-spacing:5px;color:#ffd35d;margin-top:4px;text-shadow:none}.profile{background:#ffffff17;border:1px solid #b6d5e155;border-radius:10px;padding:10px;white-space:nowrap}.wallet{white-space:nowrap;color:#ffdf87;font-weight:800}.top button{white-space:nowrap}.shell{padding:12px 14px 58px;max-width:1700px;margin:auto}.channel{height:119px;border:1px solid #dcecf8;border-radius:13px;background:linear-gradient(115deg,#dbe9f4e9,#a7bfd2ed);padding:12px 16px;box-shadow:inset 0 1px #fff}.eyebrow{color:#496276;font-weight:800;font-size:15px}.channel h1{font-size:28px;margin:2px 0 8px}.tabs{display:flex;gap:8px}.tabs button{min-width:160px;border-radius:12px 12px 0 0;padding:8px}.tabs button[aria-selected=true]{background:#e8f3fc;border-bottom-color:#e8f3fc}.layout{display:grid;grid-template-columns:minmax(0,2.65fr) minmax(285px,1fr);gap:12px;margin-top:5px;height:calc(100vh - 285px);min-height:370px}.panel{border:1px solid #c7e0f0;border-radius:13px;background:linear-gradient(115deg,#dcebf8f2,#a1bdd4f5);box-shadow:inset 0 1px white,0 5px 12px #061c2f38;overflow:hidden}.rooms{display:flex;flex-direction:column;padding:12px}.panelhead{display:flex;align-items:center;gap:8px;min-height:50px;border-bottom:1px solid #f9feff80;padding-bottom:8px}.panelhead h2{margin:0 auto 0 0;font-size:21px}.roomlist{flex:1;overflow:auto;display:grid;align-content:start;gap:10px;padding:14px 3px}.empty{place-self:center;text-align:center;font-size:19px;color:#1c3247}.room{padding:14px;border-radius:10px;background:#f4faff;border:1px solid #a2c5db;display:flex;justify-content:space-between;align-items:center;gap:12px}.room strong{display:block}.room span{color:#52718b;font-size:13px}.side{display:grid;grid-template-rows:205px minmax(0,1fr);gap:12px;min-height:0}.users,.chat{padding:11px;display:flex;flex-direction:column;min-height:0}.usercard{background:#f3faff;border:1px solid #c3dfec;border-radius:12px;flex:1;padding:16px;display:flex;align-items:center;gap:14px;margin-top:6px}.avatar{display:grid;place-items:center;width:76px;height:76px;border-radius:18px;background:linear-gradient(#d5edff,#8bc0dc);border:2px solid white;font-size:45px}.usercard strong{display:block}.usercard span{display:block;color:#50718a;font-size:14px;margin-top:5px}.chatlog{flex:1;overflow:auto;background:#233c50ed;border-radius:8px;padding:9px;color:#ecf5ff;font-size:14px;min-height:80px}.chatline{margin:0 0 8px;overflow-wrap:anywhere}.chatline b{color:#ffd478}.chat form{display:flex;gap:6px;margin-top:8px}.chat input{width:100%;min-width:0;border:1px solid #96b7cc;border-radius:8px;padding:8px}.chat form button{flex:none}.footer{position:fixed;bottom:0;left:0;right:0;display:flex;align-items:center;gap:12px;padding:9px 17px;color:#d7ecff;background:#132c42;border-top:1px solid #7daac1}.footer strong{color:#ffdf91}.footer .version{margin-left:auto;color:#a2bdce;font-size:13px}.update{max-width:45%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:13px}.dialog{border:1px solid #9dbed1;border-radius:14px;padding:25px;background:#e8f4fc;color:#183149;box-shadow:0 20px 70px #051a30aa;max-width:420px;width:90%}.dialog::backdrop{background:#081b2db0}.dialog h2{margin:0 0 16px}.dialog label{display:block;font-weight:700}.dialog input{width:100%;padding:10px;margin-top:7px;border:1px solid #9ab9cc;border-radius:8px}.dialog menu{display:flex;justify-content:flex-end;gap:8px;padding:0;margin:19px 0 0}@media(max-width:1100px){.top{gap:5px;padding:10px}.logo{font-size:33px}.top button{padding:7px}.profile{padding:7px}.wallet{font-size:13px}}
-</style></head><body>
-<header class="top"><div class="logo"><span class="q">Q</span>-TIME<small>QUIZ BATTLE</small></div><div class="profile">🐾 동동 · 최고관리자</div><div class="wallet">🟡 999953600</div><button type="button" data-info="내 프로필">내 프로필</button><button type="button" data-info="설정">⚙ 설정</button><button type="button" data-info="랭킹">랭킹</button><button type="button" data-info="상점">상점</button><button type="button" data-info="관리자">관리자</button><button type="button" data-info="로그아웃">로그아웃</button></header>
-<main class="shell"><section class="channel"><div class="eyebrow">CHANNEL</div><h1 id="channel-title">자유채널</h1><div class="tabs" role="tablist" aria-label="채널"><button type="button" role="tab" aria-selected="true" data-channel="자유채널">자유채널</button><button type="button" role="tab" aria-selected="false" data-channel="초보채널">초보채널</button></div></section><div class="layout"><section class="panel rooms"><div class="panelhead"><h2>방 목록</h2><button class="teal" id="quick" type="button">빠른대전</button><button class="orange" id="create" type="button">방 만들기</button></div><div class="roomlist" id="roomlist"><p class="empty">현재 생성된 일반 대전 방이 없습니다.</p></div></section><div class="side"><section class="panel users"><div class="panelhead"><h2>현재 접속자</h2><button type="button" data-info="친구">친구</button></div><div class="usercard"><div class="avatar" aria-hidden="true">🐕</div><div><strong>동동 (나)</strong><span>Lv.1 · 대기 중</span></div></div></section><section class="panel chat"><div class="panelhead"><h2>채널 전체채팅</h2></div><div class="chatlog" id="chatlog" role="log" aria-live="polite"><p class="chatline">채팅 미리보기입니다. 현재 다른 사용자와 연결되어 있지 않습니다.</p></div><form id="chatform"><input id="chatinput" maxlength="120" aria-label="채팅 내용" placeholder="메시지 입력"><button class="orange" type="submit">전송</button></form></section></div></div></main>
-<footer class="footer"><span>📢 최고관리자 공지</span><strong>OPEN TALK · 어엿챗</strong><span class="version">Client v0.1.3</span><span class="update" id="status" aria-live="polite">업데이트 확인 중…</span></footer>
-<dialog class="dialog" id="dialog"><form method="dialog" id="roomform"><h2>방 만들기</h2><label>방 제목<input id="roomtitle" required maxlength="40" placeholder="퀴즈 대전"></label><menu><button type="button" id="cancel">취소</button><button class="orange" type="submit">만들기</button></menu></form></dialog>
-<script>
-const $=id=>document.getElementById(id);const rooms={'자유채널':[],'초보채널':[]};let current='자유채널';
-function renderRooms(){const list=$('roomlist');list.replaceChildren();if(!rooms[current].length){const p=document.createElement('p');p.className='empty';p.textContent='현재 생성된 일반 대전 방이 없습니다.';list.append(p);return}for(const name of rooms[current]){const row=document.createElement('div');row.className='room';const meta=document.createElement('div');const title=document.createElement('strong');title.textContent=name;const hint=document.createElement('span');hint.textContent='로컬 미리보기 · 게임 연결 준비 중';meta.append(title,hint);const enter=document.createElement('button');enter.textContent='입장';enter.onclick=()=>alert('게임 서버 연결 후 사용할 수 있습니다.');row.append(meta,enter);list.append(row)}}
-document.querySelectorAll('[data-channel]').forEach(tab=>tab.addEventListener('click',()=>{current=tab.dataset.channel;$('channel-title').textContent=current;document.querySelectorAll('[data-channel]').forEach(item=>item.setAttribute('aria-selected',String(item===tab)));renderRooms()}));document.querySelectorAll('[data-info]').forEach(button=>button.addEventListener('click',()=>alert(button.dataset.info+' 기능은 게임 서버 연결 후 사용할 수 있습니다.')));$('quick').onclick=()=>alert('빠른대전은 게임 서버 연결 후 사용할 수 있습니다.');$('create').onclick=()=>{$('dialog').showModal();$('roomtitle').focus()};$('cancel').onclick=()=>$('dialog').close();$('roomform').addEventListener('submit',event=>{if(!$('roomtitle').value.trim()){event.preventDefault();return}rooms[current].push($('roomtitle').value.trim());renderRooms();$('roomtitle').value=''});$('chatform').addEventListener('submit',event=>{event.preventDefault();const input=$('chatinput');const message=input.value.trim();if(!message)return;const line=document.createElement('p');line.className='chatline';const user=document.createElement('b');user.textContent='동동: ';line.append(user,document.createTextNode(message));$('chatlog').append(line);$('chatlog').scrollTop=$('chatlog').scrollHeight;input.value=''});if(window.qtime?.onUpdateStatus)window.qtime.onUpdateStatus(message=>{$('status').textContent=message});
-</script></body></html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+  <title>Q-TIME | QUIZ BATTLE</title>
+  <style>
+    :root {
+      --bg-base: #0f172a;
+      --bg-surface: #1e293b;
+      --bg-surface-hover: #334155;
+      --bg-card: #1e293b;
+      --border-color: #334155;
+      --primary: #38bdf8;
+      --primary-hover: #0284c7;
+      --accent-orange: #f59e0b;
+      --accent-teal: #14b8a6;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Common Button & Input Styles */
+    button, input {
+      font: inherit;
+      color: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-weight: 600;
+      background: var(--bg-surface-hover);
+      transition: all 0.2s ease;
+    }
+
+    button:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    button.btn-primary {
+      background: var(--primary);
+      color: #0f172a;
+    }
+
+    button.btn-orange {
+      background: var(--accent-orange);
+      color: #0f172a;
+    }
+
+    button.btn-teal {
+      background: var(--accent-teal);
+      color: #0f172a;
+    }
+
+    input {
+      background: var(--bg-base);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 14px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: var(--primary);
+    }
+
+    /* Top Navigation Bar */
+    .top-bar {
+      height: 64px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .logo {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .logo .q {
+      color: var(--accent-orange);
+    }
+
+    .logo small {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-left: 8px;
+      letter-spacing: 2px;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .profile-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg-base);
+      border: 1px solid var(--border-color);
+      padding: 6px 14px;
+      border-radius: 20px;
+    }
+
+    .wallet {
+      color: var(--accent-orange);
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    /* Main Container */
+    .main-container {
+      flex: 1;
+      max-width: 1600px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Channel Banner */
+    .channel-banner {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .channel-info .eyebrow {
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .channel-info h1 {
+      font-size: 22px;
+      margin-top: 4px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+    }
+
+    .tabs button {
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 6px;
+      padding: 8px 16px;
+    }
+
+    .tabs button[aria-selected="true"] {
+      background: var(--bg-surface-hover);
+      color: var(--text-main);
+    }
+
+    /* Dashboard Layout Grid */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 16px;
+      flex: 1;
+      min-height: 500px;
+    }
+
+    /* Panels */
+    .panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-header h2 {
+      font-size: 18px;
+    }
+
+    /* Room List */
+    .room-list {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .room-item {
+      background: var(--bg-base);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: border-color 0.2s;
+    }
+
+    .room-item:hover {
+      border-color: var(--primary);
+    }
+
+    .room-info strong {
+      display: block;
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+
+    .room-info span {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    /* Side Panel */
+    .side-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .user-card {
+      background: var(--bg-base);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 16px;
+    }
+
+    .avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      background: var(--primary);
+      color: #0f172a;
+      display: grid;
+      place-items: center;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .user-info strong {
+      display: block;
+      font-size: 15px;
+    }
+
+    .user-info span {
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    /* Chat Section */
+    .chat-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-log {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-size: 14px;
+    }
+
+    .chat-line b {
+      color: var(--primary);
+    }
+
+    .chat-form {
+      padding: 12px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      gap: 8px;
+    }
+
+    .chat-form input {
+      flex: 1;
+    }
+
+    /* Footer */
+    .footer {
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-color);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .footer strong {
+      color: var(--accent-orange);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 900px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .top-bar{min-height:76px;height:auto;flex-wrap:wrap;padding-block:12px}.logo{white-space:nowrap}.logo small{color:#67e8f9}.top-actions{flex-wrap:wrap;justify-content:flex-end}.profile-card{border-radius:12px;padding:6px 10px}.header-avatar{width:36px;height:36px;border-radius:10px;background:#0e7490;color:white;display:grid;place-items:center;font-weight:900}.user-name{font-size:13px;white-space:nowrap}.level{font-size:12px;padding-left:10px;border-left:1px solid var(--border-color);min-width:110px}.level small{color:var(--text-muted);margin-left:5px}.exp-track{display:block;margin-top:5px;height:5px;border-radius:5px;background:#334155}.exp-track span{display:block;width:0;height:100%;background:var(--primary)}.channel-banner{align-items:center;min-height:92px}.dashboard-grid{grid-template-columns:minmax(0,1fr) minmax(300px,340px)}.panel-header{gap:12px}.room-actions{display:flex;gap:8px}.room-list{justify-content:center;min-height:270px}.room-list:has(.room-item){justify-content:flex-start}.empty{color:var(--text-muted);text-align:center;font-size:16px}.side-panel>.panel:first-child{flex:0 0 auto}.side-panel .chat-section{min-height:320px}.user-card{background:#27364d}.avatar{flex:none;background:#0e7490;color:#e0f2fe}.chat-log{min-height:100px}.chat-muted{color:var(--text-muted)}.chat-options{padding:8px 12px 0;display:flex;align-items:center;gap:7px;font-size:13px}.chat-options select{flex:1;min-width:0;background:#0f172a;border:1px solid var(--border-color);border-radius:8px;padding:8px;color:var(--text-main)}.chat-options button{padding:8px}.chat-form{min-width:0}.chat-form input{min-width:0}.footer{gap:12px}.version{white-space:nowrap}.version #status{color:var(--primary);margin-left:10px}.modal{border:1px solid #475569;background:#1e293b;color:#f8fafc;border-radius:12px;padding:23px;max-width:420px;width:90%;box-shadow:0 18px 65px #0009}.modal::backdrop{background:#020617ba}.modal h2{margin:0 0 15px}.modal label{display:block}.modal input{display:block;width:100%;margin-top:7px}.modal menu{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;list-style:none}@media(max-width:900px){.main-container{padding:14px}.dashboard-grid{grid-template-columns:1fr}.top-actions{justify-content:flex-start}.side-panel .chat-section{min-height:320px}}@media(max-width:560px){.channel-banner{align-items:flex-start;flex-direction:column;gap:12px}.room-actions{flex-wrap:wrap}.panel-header{flex-wrap:wrap}.chat-options{flex-wrap:wrap}.footer{flex-wrap:wrap}}
+
+    /* Final layout: channel heading and rooms share the left column; user/chat fills the right. */
+    .main-container{display:grid;grid-template-columns:minmax(0,1fr) 340px;grid-template-rows:116px minmax(480px,1fr);column-gap:16px;row-gap:16px;max-width:1600px}
+    .channel-banner{grid-column:1;grid-row:1;min-width:0;padding:20px 24px;background:#24354a;border-color:#405a70;box-shadow:inset 0 1px #ffffff12}
+    .dashboard-grid{display:contents}
+    .dashboard-grid>.panel{grid-column:1;grid-row:2;min-width:0;background:#202f43}
+    .side-panel{grid-column:2;grid-row:1 / span 2;min-width:0;min-height:0}
+    .side-panel>.panel:first-child{min-height:190px;flex:0 0 auto;background:#25374a}
+    .side-panel .chat-section{background:#1f3044}
+    .room-list{background:linear-gradient(90deg,#ffffff05 1px,transparent 1px),linear-gradient(#ffffff05 1px,transparent 1px);background-size:80px 80px}
+    .top-bar{background:#1c2c40;border-bottom-color:#365c74;box-shadow:0 2px 12px #06142255}
+    .logo{display:block;flex:none;font-size:31px;letter-spacing:-1.3px;font-style:italic;line-height:1;font-weight:900;text-shadow:0 2px 2px #071421}
+    .logo .q{color:#ffc04c;font-size:38px;line-height:0.8;text-shadow:1px 2px #684614,0 0 16px #f6b43a35}
+    .logo small{display:block;margin:5px 0 0 2px;font-size:10px;line-height:1.1;letter-spacing:3.4px;font-style:normal;color:#b8eaff;text-shadow:none}
+    .top-actions .wallet{background:#283a50;border:1px solid #40546a;border-radius:8px;padding:10px;color:#ffce7c}
+    .panel{border-color:#364e65;box-shadow:inset 0 1px #ffffff0c,0 5px 16px #06142528}
+    .panel-header{background:#ffffff04}
+    .user-card{background:#30435a;border-color:#4a6075}
+    .chat-log{background:#162436;margin:12px 12px 0;border:1px solid #354a61;border-radius:8px}
+    .channel-info h1{font-size:25px}.channel-info .eyebrow{color:#75d9fa}
+    button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #38bdf8;outline-offset:2px}
+    @media(max-width:900px){.main-container{display:flex;flex-direction:column}.dashboard-grid{display:contents}.dashboard-grid>.panel{min-height:420px}.side-panel{min-height:0}.channel-banner{min-height:115px}}
+  </style>
+</head>
+<body>
+
+  <!-- Header Navigation -->
+  <header class="top-bar">
+    <div class="logo">
+      <span class="q">Q</span>-TIME
+      <small>QUIZ BATTLE</small>
+    </div>
+    <div class="top-actions">
+      <div class="profile-card">
+        <span class="header-avatar" aria-hidden="true">Q</span><span class="user-name">동동 · 최고관리자</span><span class="level">LV.1 <small>EXP 0/100</small><span class="exp-track"><span></span></span></span>
+      </div>
+      <span class="wallet">🪙 999953600 P</span>
+      <button type="button" data-pending="내 프로필">내 프로필</button>
+      <button type="button" data-pending="설정">⚙ 설정</button>
+      <button type="button" data-pending="랭킹">랭킹</button>
+      <button type="button" data-pending="상점">상점</button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-container">
+
+    <!-- Channel Banner -->
+    <section class="channel-banner">
+      <div class="channel-info">
+        <span class="eyebrow">CHANNEL</span>
+        <h1 id="channel-title">자유채널</h1>
+      </div>
+      <nav class="tabs" aria-label="채널 탭">
+        <button type="button" data-channel="자유채널" aria-selected="true">자유채널</button>
+        <button type="button" data-channel="초보채널" aria-selected="false">초보채널</button>
+      </nav>
+    </section>
+
+    <!-- Dashboard Grid -->
+    <div class="dashboard-grid">
+      
+      <!-- Room List Panel -->
+      <section class="panel">
+        <div class="panel-header">
+          <h2>방 목록</h2>
+          <div class="room-actions"><button class="btn-teal" type="button" data-pending="빠른대전">빠른대전</button><button class="btn-orange" type="button" id="create">+ 방 만들기</button></div>
+        </div>
+        <div class="room-list" id="room-list"><p class="empty">현재 생성된 일반 대전 방이 없습니다.</p></div>
+      </section>
+
+      <!-- Side Bar (User Profile + Chat) -->
+      <aside class="side-panel">
+        
+        <!-- User Info Panel -->
+        <div class="panel">
+          <div class="panel-header">
+            <h2>현재 접속자</h2><button type="button" data-pending="친구">친구</button>
+          </div>
+          <div class="user-card">
+            <div class="avatar" aria-hidden="true">Q</div>
+            <div class="user-info">
+              <strong>동동 (나)</strong>
+              <span>Lv.1 · 대기 중</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lobby Chat Panel -->
+        <div class="panel chat-section">
+          <div class="panel-header">
+            <h2>채널 전체채팅</h2>
+          </div>
+          <div class="chat-log" id="chat-log" role="log" aria-live="polite"><p class="chat-muted">채팅 미리보기 · 다른 사용자와 연결되지 않았습니다.</p></div>
+          <div class="chat-options"><span>📣 확성기 94개</span><select aria-label="채팅 대상"><option>모든 접속자에게</option></select><button type="button" class="btn-teal" data-pending="확성기">사용</button></div>
+          <form class="chat-form" id="chat-form">
+            <input id="chat-input" type="text" maxlength="120" aria-label="채팅 내용" placeholder="메시지를 입력하세요..." />
+            <button class="btn-primary" type="submit">전송</button>
+          </form>
+        </div>
+
+      </aside>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div>📢 최고관리자 공지 <strong>OPEN TALK · 어엿챗</strong></div>
+    <div class="version">Client v0.1.4 <span id="status">업데이트 확인 중…</span></div>
+  </footer>
+
+  <dialog class="modal" id="room-dialog"><form method="dialog" id="room-form"><h2>방 만들기</h2><label>방 제목<input id="room-title" maxlength="40" required placeholder="퀴즈 대전"></label><menu><button type="button" id="cancel">취소</button><button type="submit" class="btn-orange">만들기</button></menu></form></dialog>
+  <script>
+    const byId = id => document.getElementById(id);
+    const rooms = {'자유채널': [], '초보채널': []}; let channel = '자유채널';
+    function renderRooms(){const list=byId('room-list');list.replaceChildren();if(!rooms[channel].length){const p=document.createElement('p');p.className='empty';p.textContent='현재 생성된 일반 대전 방이 없습니다.';list.append(p);return}for(const name of rooms[channel]){const row=document.createElement('div');row.className='room-item';const info=document.createElement('div');info.className='room-info';const strong=document.createElement('strong');strong.textContent=name;const note=document.createElement('span');note.textContent='내 컴퓨터에서만 보이는 미리보기 방';info.append(strong,note);const button=document.createElement('button');button.className='btn-teal';button.type='button';button.textContent='입장하기';button.onclick=()=>alert('실제 대전은 서버 연결 후 이용할 수 있습니다.');row.append(info,button);list.append(row)}}
+    document.querySelectorAll('[data-channel]').forEach(tab=>tab.addEventListener('click',()=>{channel=tab.dataset.channel;byId('channel-title').textContent=channel;document.querySelectorAll('[data-channel]').forEach(item=>item.setAttribute('aria-selected',String(item===tab)));renderRooms()}));
+    document.querySelectorAll('[data-pending]').forEach(button=>button.addEventListener('click',()=>alert(button.dataset.pending+' 기능은 서버 연결 후 이용할 수 있습니다.')));
+    byId('create').onclick=()=>{byId('room-dialog').showModal();byId('room-title').focus()};byId('cancel').onclick=()=>byId('room-dialog').close();byId('room-form').addEventListener('submit',event=>{const value=byId('room-title').value.trim();if(!value){event.preventDefault();return}rooms[channel].push(value);renderRooms();byId('room-title').value=''});
+    byId('chat-form').addEventListener('submit',event=>{event.preventDefault();const input=byId('chat-input');const value=input.value.trim();if(!value)return;const line=document.createElement('p');line.className='chat-line';const name=document.createElement('b');name.textContent='동동: ';line.append(name,document.createTextNode(value));byId('chat-log').append(line);byId('chat-log').scrollTop=byId('chat-log').scrollHeight;input.value=''});
+    if(window.qtime?.onUpdateStatus)window.qtime.onUpdateStatus(message=>{byId('status').textContent=message});
+  </script>
+</body>
+</html>
