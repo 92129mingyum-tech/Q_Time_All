@@ -1,0 +1,29 @@
+/* Q-TIME lobby skin; the original gameplay and account elements retain their IDs and handlers. */
+body:not(.qt-game-mode){background:#111d2e!important;color:#e7f3fc!important}
+#app:not(.hidden){background:#152437!important;border:1px solid #36536b!important;border-radius:12px!important;box-shadow:0 20px 65px #0007!important}
+#app .top{background:#1c2d40!important;border:1px solid #395a71!important;border-radius:10px!important;box-shadow:none!important;color:#eef9ff!important}
+#app .top .brandMark .bulbQ{background:#ffc34c!important;color:#1d2a3c!important;border:0!important;box-shadow:none!important}
+#app .top .brandMark h1{color:#f5fbff!important;font-family:Arial,sans-serif!important;font-style:italic!important;text-shadow:0 2px 3px #061426!important}
+#app .top .brandMark:after{content:'QUIZ BATTLE';display:block;position:absolute;left:12px;top:54px;font-size:10px;letter-spacing:2.5px;color:#a6dfff;font-weight:bold}
+#app .top .stats span{background:#273b51!important;color:#eaf6ff!important;border:1px solid #445e72!important;box-shadow:none!important}
+#app .top button{background:#2c465c!important;color:#edfaff!important;border:1px solid #4a6b7d!important;box-shadow:none!important}
+#app .top #logout{color:#ffdc96!important}
+#channel .panel,.sideStack>.panel,#shop>.panel,#room>.panel{background:#233449!important;border:1px solid #426179!important;border-radius:10px!important;box-shadow:none!important;color:#ecf8ff!important}
+#channel .panel h2,#channel .panel h3{color:#f2f8ff!important;text-shadow:none!important}
+#channel .panel small,#channel .panel .tag{color:#a8d8f0!important}
+#channel .channelTabs{background:#1d3047!important;border:1px solid #456781!important;box-shadow:none!important}
+#channel .channelTabs button{background:#334a61!important;border:1px solid #5b788e!important;color:#eef7ff!important;box-shadow:none!important}
+#channel .channelTabs button.active{background:#167fac!important;color:#fff!important;border-color:#75cce9!important}
+#channel .rooms{background-color:#1a2a3d!important;background-image:linear-gradient(90deg,#ffffff07 1px,transparent 1px),linear-gradient(#ffffff07 1px,transparent 1px)!important;background-size:70px 70px!important;border-radius:9px!important}
+#channel .roomCard,#channel .userRow{background:#2b4158!important;border:1px solid #50748d!important;color:#fff!important;box-shadow:none!important}
+#channel .chatLog{background:#14253a!important;border:1px solid #375770!important;color:#edf7ff!important;box-shadow:none!important}
+#channel .shoutBar{display:flex!important;gap:7px!important;background:#20374a!important;border:1px solid #496b82!important;border-radius:8px!important;color:#fff!important;padding:6px!important}
+#channel .shoutBar>b{font-size:0!important;white-space:nowrap}#channel .shoutBar>b:before{content:'📣';font-size:23px}#shoutCountLobby{font-size:12px!important}
+#channel .shoutBar input,#channel .chatForm input{flex:1;min-width:0;background:#15263a!important;color:#fff!important;border:1px solid #668aa1!important;border-radius:7px!important;box-shadow:none!important}
+#channel .shoutBar button,#channel .chatForm button{background:#f8ac2f!important;color:#16273a!important;border:0!important;box-shadow:none!important}
+#noticeTicker{background:#172e42!important;border:1px solid #4b7690!important;border-radius:8px!important;color:#fff!important;box-shadow:none!important}
+#noticeTicker .tickerLabel{color:#d8f1ff!important}
+.shoutNotice{background:#172d43!important;border:2px solid #91c3dd!important;border-radius:12px!important;color:#fff!important;box-shadow:0 15px 35px #0009!important;min-width:0!important;width:min(760px,calc(100vw - 24px))!important;overflow-wrap:anywhere!important}
+.shoutNotice small{color:#b5d8ec!important}.shoutNotice .shoutText{color:var(--shout-color,#ffcf56)!important}
+.shoutPalette{display:flex;align-items:center;gap:4px;flex:none}.shoutPalette button{width:20px!important;min-width:20px!important;height:20px!important;padding:0!important;border-radius:50%!important;background:var(--tone)!important;border:2px solid #cde8fc!important;box-shadow:none!important}.shoutPalette button[aria-pressed=true]{outline:2px solid white!important;outline-offset:1px!important}
+.modal:not(.hidden){display:grid!important;place-items:center!important}.modal .dialog{margin:auto!important}
