@@ -1,5 +1,5 @@
-.qtime-profile-art{width:80%;height:80%;object-fit:contain;display:block;pointer-events:none}
-.header-avatar .qtime-profile-art,.online-user-list .avatar .qtime-profile-art{width:90%;height:90%}
+.qtime-profile-art{display:block;width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;object-position:center;margin:auto;pointer-events:none}
+.header-avatar .qtime-profile-art,.online-user-list .avatar .qtime-profile-art{width:100%;height:100%}
 .online-user-list .user-card{gap:8px}.online-user-list .user-info{min-width:0;flex:1}
 .profile-view-btn{flex:none;border:1px solid #85bcd0;background:#183e58;color:#eaf8ff;border-radius:8px;padding:6px 7px;font-size:11px;font-weight:800;cursor:pointer}
 .profile-view-btn:hover{background:#285d7b}
@@ -24,3 +24,5 @@
 .slot.compact .profile-view-btn{margin-top:2px;font-size:11px;padding:4px 8px}
 
 body:has(#game-screen.active) .qtime-shout-notice{top:auto;bottom:84px;max-width:min(680px,calc(100% - 30px));font-size:17px}
+
+.slot.compact:has(.host-actions){gap:3px}.slot.compact:has(.host-actions) .profile-icon{width:54px;height:54px;font-size:36px}.slot.compact:has(.host-actions) .qtime-profile-art{width:100%;height:100%;object-fit:contain}.slot.compact .host-actions{display:flex;justify-content:center;gap:3px;width:100%}.slot.compact .host-actions .profile-view-btn{font-size:10px;padding:3px 4px;white-space:nowrap}.slot.compact:has(.host-actions)>.profile-view-btn{margin:0}

@@ -2,9 +2,13 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const channels = {'자유채널':1,'초보채널':2};
+  const randomRoomTitles=['퀴즈 우리 함께 풀어요!','오늘도 퀴즈 한 판!','다 같이 정답을 찾아봐요','가볍게 즐기는 퀴즈 대결','퀴즈 고수 모두 모여요!','함께 도전하는 퀴즈방'];
   let client=null,user=null,profile=null,channel='자유채널',roomId=null,room=null,match=null;
   let roomPoll=null,lobbyPoll=null,shoutPoll=null,refreshing=false,roomRefreshing=false,channelRefreshing=false,shoutRefreshing=false,epoch=0;
-  let channelUsers=[],lastShout=0,shoutQueue=[],showingShout=false,selectedProfile=null;
+  let channelUsers=[],lastShout=0,shoutInitialized=false,shoutQueue=[],showingShout=false,selectedProfile=null;
+  const channelBaseline=new Map();
+  const roomBaseline=new Map();
+  const whisperBaseline=new Map();
   const errorText = error => String(error?.message || error || '알 수 없는 오류');
   const frame = () => $('feature-frame')?.contentWindow;
   function status(value){$('shop-status').textContent=value;}
@@ -23,8 +27,9 @@
         const label=document.createElement('strong');label.textContent=entry.title||'퀴즈방';
         const detail=document.createElement('span');detail.textContent=` ${entry.status==='playing'?'게임 중':'대기 중'} · ${entry.count}/${entry.max_players}명`;
         const button=document.createElement('button');button.type='button';button.textContent='입장';
-        button.disabled=entry.status!=='waiting'||entry.count>=entry.max_players;
-        button.onclick=()=>join(entry);
+        button.disabled=entry.status==='waiting'&&entry.count>=entry.max_players;
+        button.textContent=entry.status==='playing'?'게임 중':button.disabled?'인원 마감':'입장';
+        button.onclick=()=>entry.status==='playing'?alert('게임이 진행 중입니다. 종료 후 입장해 주세요.'):join(entry);
         row.append(label,detail,button);$('room-list').append(row);
       }
     }catch(error){if(current===epoch)listMessage('방 목록 연결 실패: '+errorText(error))}
@@ -40,13 +45,15 @@
       ]);
       if(current!==epoch)return;
       channelUsers=state.users||[];
+      if(!whisperBaseline.has('lobby'))whisperBaseline.set('lobby',Math.max(0,...(whispers||[]).map(m=>Number(m.id)||0)));
       document.querySelectorAll('[data-channel]').forEach(tab=>{
         const count=tab.querySelector('.channel-count');
         if(count)count.textContent=`(${Number(counts[channels[tab.dataset.channel]]||0)}/30)`;
       });
       const log=$('chat-log');log.replaceChildren();
-      const feed=[...(state.messages||[]).map(m=>({...m,private:false})),
-        ...(whispers||[]).map(m=>({...m,private:true}))];
+      if(!channelBaseline.has(selected))channelBaseline.set(selected,Math.max(0,...(state.messages||[]).map(m=>Number(m.id)||0)));
+      const feed=[...(state.messages||[]).filter(m=>Number(m.id)>channelBaseline.get(selected)).map(m=>({...m,private:false})),
+        ...(whispers||[]).filter(m=>Number(m.id)>whisperBaseline.get('lobby')).map(m=>({...m,private:true}))];
       feed.sort((a,b)=>new Date(a.created_at||0)-new Date(b.created_at||0));
       for(const entry of feed){
         const line=document.createElement('p');line.className='chat-line';
@@ -79,6 +86,8 @@
     finally{channelRefreshing=false}
   }
   function displayRoom(state){
+    if(!roomBaseline.has(state.id))roomBaseline.set(state.id,Math.max(0,...(state.messages||[]).map(m=>Number(m.id)||0)));
+    state={...state,messages:(state.messages||[]).filter(m=>Number(m.id)>roomBaseline.get(state.id))};
     room=state;window.qtimeRoomTitle=state.title;window.qtimeRoom=state;
     if(frame()?.qtimeRoomBridge)frame().qtimeRoomBridge.update(state,user.id);
   }
@@ -96,7 +105,10 @@
       const currentMatch=await rpc('qtime_match_state_v2',{p_room_id:selected});
       if(roomId===selected)displayMatch(currentMatch);
       const privateMessages=await rpc('qtime_whisper_inbox',{p_room_id:selected});
-      if(roomId===selected)frame()?.qtimeRoomBridge?.privateUpdate(privateMessages,user.id);
+      if(roomId===selected){
+        if(!whisperBaseline.has(selected))whisperBaseline.set(selected,Math.max(0,...(privateMessages||[]).map(m=>Number(m.id)||0)));
+        frame()?.qtimeRoomBridge?.privateUpdate((privateMessages||[]).filter(m=>Number(m.id)>whisperBaseline.get(selected)),user.id);
+      }
     }catch(error){
       if(roomId===selected){
         status('방 연결 오류: '+errorText(error));
@@ -114,7 +126,7 @@
   }
   async function create(event){
     event.preventDefault();if(!client)return;
-    const title=$('room-title').value.trim()||'퀴즈방';
+    const title=$('room-title').value.trim()||randomRoomTitles[Math.floor(Math.random()*randomRoomTitles.length)];
     const difficulty={'쉬움':1,'보통':2,'어려움':3,'넌센스':4}[$('room-difficulty').value]||2;
     const maxPlayers=Number.parseInt($('room-capacity').value,10)||10;
     try{
@@ -125,6 +137,18 @@
   async function join(entry){
     try{await rpc('qtime_room_join',{p_room_id:entry.id});await openRoom(entry.id)}
     catch(error){alert('방 입장 실패: '+errorText(error));await refreshRooms()}
+  }
+  async function kickPlayer(target){
+    if(!roomId||!room||room.host_id!==user?.id||target===user.id)return;
+    if(!confirm('이 참가자를 강퇴할까요?'))return;
+    try{await rpc('qtime_room_kick',{p_room_id:roomId,p_target_id:target});await refreshRoom()}
+    catch(error){alert('강퇴 실패: '+errorText(error))}
+  }
+  async function transferHost(target){
+    if(!roomId||!room||room.host_id!==user?.id||target===user.id)return;
+    if(!confirm('이 참가자에게 방장을 위임할까요?'))return;
+    try{await rpc('qtime_room_transfer_host',{p_room_id:roomId,p_target_id:target});await refreshRoom()}
+    catch(error){alert('방장 위임 실패: '+errorText(error))}
   }
   async function closeRoom(leave=true){
     const id=roomId;roomId=null;room=match=null;clearInterval(roomPoll);roomPoll=null;
@@ -178,7 +202,7 @@
   function makeShout(entry){
     const notice=document.createElement('div');notice.className='qtime-shout-notice';
     notice.style.setProperty('--shout-color',entry.color);
-    const label=document.createElement('small');label.textContent=`📣 ${entry.nickname}님의 확성기`;
+    const label=document.createElement('small');label.textContent=`📣 확성기 · ${entry.nickname||'도전자'}`;
     const message=document.createElement('span');message.textContent=entry.message;
     notice.append(label,message);document.body.append(notice);
     setTimeout(()=>{notice.remove();showingShout=false;nextShout()},3000);
@@ -196,9 +220,14 @@
     shoutRefreshing=true;
     try{
       const rows=await rpc('qtime_shout_recent',{});
+      if(!shoutInitialized){
+        lastShout=Math.max(lastShout,0,...(rows||[]).map(entry=>Number(entry.id)||0));
+        shoutInitialized=true;
+        return;
+      }
       for(const entry of rows||[]){
         const id=Number(entry.id);if(id<=lastShout)continue;
-        if(Date.now()-new Date(entry.created_at).getTime()<(lastShout?30000:3500))shoutQueue.push(entry);
+        shoutQueue.push(entry);
         lastShout=Math.max(lastShout,id);
       }
       nextShout();
@@ -206,7 +235,11 @@
     finally{shoutRefreshing=false}
   }
   window.qtimeShoutSend=async(message,color)=>{
-    await rpc('qtime_shout_send',{p_message:message,p_color:color});await refreshShouts();
+    const sentId=Number(await rpc('qtime_shout_send',{p_message:message,p_color:color}));
+    if(Number.isFinite(sentId))lastShout=Math.max(lastShout,sentId);
+    shoutInitialized=true;
+    shoutQueue.push({id:sentId,nickname:profile?.nickname||'도전자',message,color});
+    nextShout();
   };
   async function start(){
     if(!roomId)return;
@@ -223,7 +256,7 @@
     document.querySelectorAll('[data-channel]').forEach(tab=>tab.setAttribute('aria-selected',String(tab.dataset.channel===next)));
     refreshRooms();refreshChannel();
   }
-  function reset(){epoch++;clearInterval(roomPoll);clearInterval(lobbyPoll);clearInterval(shoutPoll);roomPoll=lobbyPoll=shoutPoll=null;roomId=room=match=null;client=user=profile=null;channelUsers=[];lastShout=0;shoutQueue=[];showingShout=false;window.qtimeCloseFeature?.();listMessage('로그인 후 방 목록을 불러옵니다.')}
+  function reset(){epoch++;clearInterval(roomPoll);clearInterval(lobbyPoll);clearInterval(shoutPoll);roomPoll=lobbyPoll=shoutPoll=null;roomId=room=match=null;client=user=profile=null;channelUsers=[];channelBaseline.clear();roomBaseline.clear();whisperBaseline.clear();lastShout=0;shoutInitialized=false;shoutQueue=[];showingShout=false;window.qtimeCloseFeature?.();listMessage('로그인 후 방 목록을 불러옵니다.')}
   document.querySelectorAll('[data-channel]').forEach(tab=>tab.onclick=()=>switchChannel(tab.dataset.channel));
   $('create').onclick=()=>{$('room-dialog').showModal()};
   $('cancel').onclick=()=>{$('room-dialog').close()};
@@ -252,7 +285,7 @@
     if(match)displayMatch(match);
     nextShout();
   });
-  window.qtimeRoomServer={closeRoom,setReady,sendRoomMessage,start,answer,viewProfile};
+  window.qtimeRoomServer={closeRoom,setReady,sendRoomMessage,start,answer,viewProfile,kickPlayer,transferHost};
   window.addEventListener('qtime:signed-in',event=>{
     reset();({client,user,profile}=event.detail);
     refreshRooms();refreshChannel();refreshShouts();

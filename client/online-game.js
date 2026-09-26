@@ -68,6 +68,11 @@
       if(member.user_id!==id){
         const view=document.createElement('button');view.className='profile-view-btn';view.type='button';
         view.textContent='프로필 보기';view.onclick=()=>send('viewProfile',member.user_id);card.append(view);
+        if(isHost&&next.status==='waiting'){
+          const kick=document.createElement('button');kick.className='profile-view-btn';kick.type='button';kick.textContent='강퇴';kick.onclick=()=>send('kickPlayer',member.user_id);
+          const transfer=document.createElement('button');transfer.className='profile-view-btn';transfer.type='button';transfer.textContent='방장 위임';transfer.onclick=()=>send('transferHost',member.user_id);
+          const actions=document.createElement('div');actions.className='host-actions';actions.append(kick,transfer);card.append(actions);
+        }
       }
       slots.append(card);
     });
@@ -187,7 +192,7 @@
     }
     if(phase==='finished'){
       const key=next.ended_at;
-      if(lastResultKey!==key){lastResultKey=key;showResult(next)}
+      if(lastResultKey!==key){lastResultKey=key;showResult(next);parent.qtimeRefreshMyProfile?.()}
       updateClock();return;
     }
     $('countdown').hidden=true;
@@ -206,7 +211,7 @@
         });
         $('explanation').textContent=`정답 ${next.correct_index+1}번 · ${next.explanation||''}`;
         $('explanation').hidden=false;
-        $('feedback').textContent=next.my_points>0?`정답! +${next.my_points}점`:'이번 문제는 0점';
+        $('feedback').textContent=next.my_randomized?`미선택 · ${Number(next.my_choice)+1}번 자동 선택 · ${next.my_points||0}점`:next.my_points>0?`정답! +${next.my_points}점`:'이번 문제는 0점';
         drawPlayers();scoreEffect(Number(next.my_points||0),Number(next.my_streak||0));
       }
     }else drawPlayers();
@@ -234,7 +239,7 @@
   function shout(entry,done){
     const notice=document.createElement('div');notice.className='qtime-shout-notice';
     notice.style.setProperty('--shout-color',entry.color);
-    const label=document.createElement('small');label.textContent=`📣 ${entry.nickname}님의 확성기`;
+    const label=document.createElement('small');label.textContent=`📣 확성기 · ${entry.nickname||'도전자'}`;
     const message=document.createElement('span');message.textContent=entry.message;
     notice.append(label,message);document.body.append(notice);
     setTimeout(()=>{notice.remove();done?.()},3000);
