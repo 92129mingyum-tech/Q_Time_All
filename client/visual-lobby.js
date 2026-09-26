@@ -10,18 +10,19 @@
       const empty = document.createElement('p'); empty.className = 'empty';
       empty.textContent = '현재 생성된 일반 대전 방이 없습니다.'; list.append(empty); return;
     }
-    for (const title of rooms[channel]) {
+    for (const room of rooms[channel]) {
       const row = document.createElement('div'); row.className = 'room-item';
-      const label = document.createElement('strong'); label.textContent = title + ' · 1/10명';
+      const label = document.createElement('strong'); label.textContent = room.title + ' · 1/' + room.capacity + '명';
       const join = document.createElement('button'); join.type = 'button'; join.textContent = '입장';
-      join.onclick = () => showWaiting(title); row.append(label, join); list.append(row);
+      join.onclick = () => showWaiting(room); row.append(label, join); list.append(row);
     }
   }
-  function showWaiting(title) {
+  function showWaiting(room) {
+    const title=room.title;
     $('waiting-title').textContent = title;
     $('waiting-members').textContent = '나 · 대기 중';
     $('waiting-status').textContent = '방 화면 미리보기입니다. 다른 사용자와 연결되지 않았습니다.';
-    ready = false; $('toggle-ready').textContent = '준비하기'; $('waiting-room').showModal();
+    ready = false; $('toggle-ready').textContent = '준비하기'; window.qtimeRoom=room;window.qtimeRoomTitle=title;window.qtimeShowFeature('./waiting-game.html','게임 대기실과 퀴즈 대결');
   }
   document.querySelectorAll('[data-channel]').forEach(tab => tab.onclick = () => {
     channel = tab.dataset.channel; $('channel-title').textContent = channel;
@@ -32,8 +33,8 @@
   $('cancel').onclick = () => $('room-dialog').close();
   $('room-form').onsubmit = event => {
     event.preventDefault(); const title = $('room-title').value.trim(); if (!title) return;
-    rooms[channel].push(title); renderRooms(); $('room-title').value = '';
-    $('room-dialog').close(); showWaiting(title);
+    const room={title,mode:$('room-mode').value,difficulty:$('room-difficulty').value,capacity:Number.parseInt($('room-capacity').value,10)};rooms[channel].push(room); renderRooms(); $('room-title').value = '';
+    $('room-dialog').close(); showWaiting(room);
   };
   $('leave-room').onclick = () => $('waiting-room').close();
   $('toggle-ready').onclick = () => {
@@ -48,7 +49,7 @@
     $('chat-log').scrollTop = $('chat-log').scrollHeight; input.value = '';
   };
   $('close-shop').onclick = () => $('shop-dialog').close();
-  document.querySelector('[data-pending="상점"]').onclick = () => $('shop-dialog').showModal();
+  document.querySelector('[data-pending="상점"]').onclick = () => window.qtimeShowFeature('./shop.html','Q-TIME 상점');
   $('buy-shout').onclick = () => { $('shop-status').textContent = '구매는 다음 서버 연결 패치에서 사용할 수 있습니다.'; };
   document.querySelectorAll('.swatches button').forEach(button => button.onclick = () => {
     color = button.dataset.color;
