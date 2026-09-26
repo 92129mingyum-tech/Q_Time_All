@@ -3,6 +3,7 @@
   const $ = id => document.getElementById(id);
   let room=null, meId=null, match=null, phase='waiting', round=0, lastScore=0;
   let seenMessage=0, activeBubble=null, bubbleUntil=0, resultTimer=null;
+  let seenPrivate=0;
   let clockOffset=0, lastRoundKey='', lastRevealKey='', lastResultKey='';
   const send=(action,data)=>parent.qtimeRoomServer?.[action]?.(data);
   function fit(){
@@ -55,14 +56,20 @@
     members.slice(0,10).forEach(member=>{
       const card=document.createElement('article');card.className='slot compact';
       if(member.user_id===id)card.classList.add('mine');
-      const icon=document.createElement('span');icon.className='profile-icon';icon.textContent=member.profile_icon||'🙂';
+      const icon=document.createElement('span');icon.className='profile-icon';
+      window.qtimeProfileIcon?.set(icon,member.profile_icon);
       const body=document.createElement('div');body.className='member';
       const name=document.createElement('strong');name.textContent=member.nickname||'도전자';
       const level=document.createElement('small');level.textContent=`LV.${member.level||1}`;
       body.append(name,level);
       const badge=document.createElement('span');badge.className='slot-tag';
       badge.textContent=member.user_id===next.host_id?'👑 방장':member.ready?'✓ 준비 완료':'준비 전';
-      card.append(icon,body,badge);slots.append(card);
+      card.append(icon,body,badge);
+      if(member.user_id!==id){
+        const view=document.createElement('button');view.className='profile-view-btn';view.type='button';
+        view.textContent='프로필 보기';view.onclick=()=>send('viewProfile',member.user_id);card.append(view);
+      }
+      slots.append(card);
     });
     for(let i=members.length;i<next.max_players;i++){
       const card=document.createElement('article');card.className='slot compact empty';
@@ -129,7 +136,7 @@
     $('round-label').textContent=`${round} / 10`;
     $('category').textContent=next.category||'퀴즈';
     $('question').textContent=next.question||'';
-    $('feedback').textContent='1~4로 선택 · 7초 안에 변경 가능';
+    $('feedback').textContent='';
     $('explanation').hidden=true;
     $('answers').replaceChildren();
     (next.options||[]).forEach((option,index)=>{
@@ -208,6 +215,30 @@
     $('hud-combo').textContent=String(next.my_streak||0);
     updateClock();
   }
+  function privateUpdate(messages,myId){
+    if(!room)return;
+    const chat=$('chat');
+    for(const item of [...(messages||[])].reverse()){
+      const row=document.createElement('p');row.className='whisper';
+      const name=document.createElement('b');
+      name.textContent=item.sender_id===myId?`🔒 나 → ${item.recipient_name}: `:`🔒 ${item.sender_name} → 나: `;
+      row.append(name,document.createTextNode(item.message));chat.append(row);
+    }
+    chat.scrollTop=chat.scrollHeight;
+    const latest=(messages||[])[0];
+    if(latest&&Number(latest.id)>seenPrivate){
+      if(seenPrivate&&phase!=='waiting')showBubble({...latest,sender_id:latest.sender_id});
+      seenPrivate=Number(latest.id);
+    }
+  }
+  function shout(entry,done){
+    const notice=document.createElement('div');notice.className='qtime-shout-notice';
+    notice.style.setProperty('--shout-color',entry.color);
+    const label=document.createElement('small');label.textContent=`📣 ${entry.nickname}님의 확성기`;
+    const message=document.createElement('span');message.textContent=entry.message;
+    notice.append(label,message);document.body.append(notice);
+    setTimeout(()=>{notice.remove();done?.()},3000);
+  }
   $('ready').onclick=()=>send('setReady',!room?.members?.find(m=>m.user_id===meId)?.ready);
   $('start').onclick=()=>send('start');
   $('leave').onclick=()=>send('closeRoom');
@@ -222,10 +253,12 @@
     event.preventDefault();const input=$('game-chat-input'),message=input.value.trim().slice(0,30);
     if(!message)return;send('sendRoomMessage',message);input.value='';
   };
+  window.qtimeChatCommands?.attach($('chat-input'));
+  window.qtimeChatCommands?.attach($('game-chat-input'));
   addEventListener('keydown',event=>{
     if(!/^[1-4]$/.test(event.key)||event.target.closest('input,textarea,[contenteditable]'))return;
     if(phase==='question'){event.preventDefault();choose(Number(event.key)-1)}
   });
   addEventListener('resize',fit);fit();setInterval(updateClock,100);
-  window.qtimeRoomBridge={update:roomUpdate,matchUpdate};
+  window.qtimeRoomBridge={update:roomUpdate,matchUpdate,privateUpdate,shout};
 })();
