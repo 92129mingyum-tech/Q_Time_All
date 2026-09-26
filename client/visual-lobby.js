@@ -1,53 +1,8 @@
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
-  const rooms = {'자유채널': [], '초보채널': []};
-  let channel = '자유채널', ready = false, color = '#ffcf56';
+  let color = '#ffcf56';
   const shoutQueue = []; let showing = false;
-  function renderRooms() {
-    const list = $('room-list'); list.replaceChildren();
-    if (!rooms[channel].length) {
-      const empty = document.createElement('p'); empty.className = 'empty';
-      empty.textContent = '현재 생성된 일반 대전 방이 없습니다.'; list.append(empty); return;
-    }
-    for (const room of rooms[channel]) {
-      const row = document.createElement('div'); row.className = 'room-item';
-      const label = document.createElement('strong'); label.textContent = room.title + ' · 1/' + room.capacity + '명';
-      const join = document.createElement('button'); join.type = 'button'; join.textContent = '입장';
-      join.onclick = () => showWaiting(room); row.append(label, join); list.append(row);
-    }
-  }
-  function showWaiting(room) {
-    const title=room.title;
-    $('waiting-title').textContent = title;
-    $('waiting-members').textContent = '나 · 대기 중';
-    $('waiting-status').textContent = '방 화면 미리보기입니다. 다른 사용자와 연결되지 않았습니다.';
-    ready = false; $('toggle-ready').textContent = '준비하기'; window.qtimeRoom=room;window.qtimeRoomTitle=title;window.qtimeShowFeature('./waiting-game.html','게임 대기실과 퀴즈 대결');
-  }
-  document.querySelectorAll('[data-channel]').forEach(tab => tab.onclick = () => {
-    channel = tab.dataset.channel; $('channel-title').textContent = channel;
-    document.querySelectorAll('[data-channel]').forEach(item => item.setAttribute('aria-selected', String(item === tab)));
-    renderRooms(); $('chat-log').textContent = channel + ' 채팅 미리보기 · 다른 사용자와 연결되지 않았습니다.';
-  });
-  $('create').onclick = () => $('room-dialog').showModal();
-  $('cancel').onclick = () => $('room-dialog').close();
-  $('room-form').onsubmit = event => {
-    event.preventDefault(); const title = $('room-title').value.trim(); if (!title) return;
-    const room={title,mode:$('room-mode').value,difficulty:$('room-difficulty').value,capacity:Number.parseInt($('room-capacity').value,10)};rooms[channel].push(room); renderRooms(); $('room-title').value = '';
-    $('room-dialog').close(); showWaiting(room);
-  };
-  $('leave-room').onclick = () => $('waiting-room').close();
-  $('toggle-ready').onclick = () => {
-    ready = !ready; $('toggle-ready').textContent = ready ? '준비 취소' : '준비하기';
-    $('waiting-members').textContent = '나 · ' + (ready ? '준비 완료' : '대기 중');
-  };
-  $('chat-form').onsubmit = event => {
-    event.preventDefault(); const input = $('chat-input'), value = input.value.trim(); if (!value) return;
-    const line = document.createElement('p'); line.className = 'chat-line';
-    const name = document.createElement('b'); name.textContent = '나: ';
-    line.append(name, document.createTextNode(value)); $('chat-log').append(line);
-    $('chat-log').scrollTop = $('chat-log').scrollHeight; input.value = '';
-  };
   $('close-shop').onclick = () => $('shop-dialog').close();
   document.querySelector('[data-pending="상점"]').onclick = () => window.qtimeShowFeature('./shop.html','Q-TIME 상점');
   $('buy-shout').onclick = () => { $('shop-status').textContent = '구매는 다음 서버 연결 패치에서 사용할 수 있습니다.'; };
