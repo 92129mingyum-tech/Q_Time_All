@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline' https://cdn.jsdelivr.net; connect-src https://rjxmhvokppwkzrzbfeae.supabase.co wss://rjxmhvokppwkzrzbfeae.supabase.co; img-src data:">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; connect-src https://rjxmhvokppwkzrzbfeae.supabase.co wss://rjxmhvokppwkzrzbfeae.supabase.co; img-src data:">
   <title>Q-TIME | QUIZ BATTLE</title>
   <style>
     :root {
@@ -512,19 +512,17 @@
   <!-- Footer -->
   <footer class="footer">
     <div class="notice-board"><span class="notice-label">📣 공지사항</span><span class="notice-window"><span class="notice-text">Q-TIME에 오신 것을 환영합니다!</span></span></div>
-    <div class="version">Client v0.1.8 <span id="status">업데이트 확인 중…</span></div>
+    <div class="version">Client v0.1.9 <span id="status">업데이트 확인 중…</span></div>
   </footer>
 
   <dialog class="modal" id="room-dialog"><form method="dialog" id="room-form"><h2>방 만들기</h2><label>방 제목<input id="room-title" maxlength="40" required placeholder="퀴즈 대전"></label><menu><button type="button" id="cancel">취소</button><button type="submit" class="btn-orange">만들기</button></menu></form></dialog>
   <dialog class="modal profile-preview" id="profile-dialog" aria-label="내 프로필 미리보기"><div class="panel-header"><h2>내 프로필</h2><button type="button" id="close-profile">닫기</button></div><div class="profile-summary"><div class="profile-character profile-symbol" id="profile-selected">🐶</div><div class="profile-facts"><strong>동동</strong><span>LV.1 · EXP 0/100</span><span>전적 · 게임 기록 연결 전</span><small id="profile-character-name">강아지 프로필</small></div></div><h3 class="profile-grid-title">프로필 이모티콘</h3><div class="profile-icon-grid" id="profile-icon-grid" role="group" aria-label="프로필 이모티콘 목록"></div><p class="profile-hint">게임 속 전신 캐릭터와 별개인 프로필 이미지입니다. 유료 항목은 구매·이용권 기능을 연결한 뒤 사용할 수 있습니다.</p></dialog>
+  <dialog class="modal" id="waiting-room" aria-label="게임 대기실"><div class="panel-header"><h2 id="waiting-title">게임 대기실</h2><button type="button" id="leave-room">방 나가기</button></div><div style="padding:20px;display:grid;gap:14px;min-width:min(440px,85vw)"><p id="waiting-members">참가자 확인 중…</p><button type="button" class="btn-primary" id="toggle-ready">준비하기</button><p id="waiting-status" role="status">방 화면 미리보기입니다. 다른 사용자와 연결되지 않았습니다.</p></div></dialog>
+  <dialog class="modal" id="shop-dialog" aria-label="상점"><div class="panel-header"><h2>상점</h2><p>구매와 보유 수량은 다음 서버 연결 패치에서 사용할 수 있습니다.</p><button type="button" id="close-shop">닫기</button></div><div style="padding:20px;display:grid;gap:14px;min-width:min(380px,85vw)"><p>확성기 사용권 · 전체 이용자에게 메시지 1회</p><p>가격 200 P · 보유 <strong id="shout-balance">0개</strong></p><button type="button" class="btn-orange" id="buy-shout">확성기 1개 구매</button><p id="shop-status" role="status"></p></div></dialog>
   <script>
     const byId = id => document.getElementById(id);
-    const rooms = {'자유채널': [], '초보채널': []}; let channel = '자유채널';
-    function renderRooms(){const list=byId('room-list');list.replaceChildren();if(!rooms[channel].length){const p=document.createElement('p');p.className='empty';p.textContent='현재 생성된 일반 대전 방이 없습니다.';list.append(p);return}for(const name of rooms[channel]){const row=document.createElement('div');row.className='room-item';const info=document.createElement('div');info.className='room-info';const strong=document.createElement('strong');strong.textContent=name;const note=document.createElement('span');note.textContent='내 컴퓨터에서만 보이는 미리보기 방';info.append(strong,note);const button=document.createElement('button');button.className='btn-teal';button.type='button';button.textContent='입장하기';button.onclick=()=>alert('실제 대전은 서버 연결 후 이용할 수 있습니다.');row.append(info,button);list.append(row)}}
-    document.querySelectorAll('[data-channel]').forEach(tab=>tab.addEventListener('click',()=>{channel=tab.dataset.channel;byId('channel-title').textContent=channel;document.querySelectorAll('[data-channel]').forEach(item=>item.setAttribute('aria-selected',String(item===tab)));renderRooms()}));
-    document.querySelectorAll('[data-pending]').forEach(button=>button.addEventListener('click',()=>alert(button.dataset.pending+' 기능은 서버 연결 후 이용할 수 있습니다.')));
-    byId('create').onclick=()=>{byId('room-dialog').showModal();byId('room-title').focus()};byId('cancel').onclick=()=>byId('room-dialog').close();byId('room-form').addEventListener('submit',event=>{const value=byId('room-title').value.trim();if(!value){event.preventDefault();return}rooms[channel].push(value);renderRooms();byId('room-title').value=''});
-    byId('chat-form').addEventListener('submit',event=>{event.preventDefault();const input=byId('chat-input');const value=input.value.trim();if(!value)return;const line=document.createElement('p');line.className='chat-line';const name=document.createElement('b');name.textContent='동동: ';line.append(name,document.createTextNode(value));byId('chat-log').append(line);byId('chat-log').scrollTop=byId('chat-log').scrollHeight;input.value=''});
+    // Visual lobby handlers are installed by visual-lobby.js.
+    document.querySelectorAll('[data-pending]:not([data-pending="상점"])').forEach(button=>button.addEventListener('click',()=>alert(button.dataset.pending+' 기능을 준비 중입니다.')));
     byId('open-profile').onclick=()=>byId('profile-dialog').showModal();byId('close-profile').onclick=()=>byId('profile-dialog').close();
     const freeProfiles=['🙂','🐶','🐱','🐰','🐸'];
     const premiumProfiles=['🐼','🦊','🐯','🐻','🐧','🐹','👻','🤖','👾','😈'];
@@ -537,14 +535,9 @@
     const grid=byId('profile-icon-grid');
     for(const entry of entries){const button=document.createElement('button');button.type='button';button.className='profile-icon';button.setAttribute('aria-pressed',String(entry.id===selectedProfile));button.setAttribute('aria-label',(entry.id.startsWith('img:')?profileNames[entry.id.slice(4)]:entry.id)+(entry.free?' 무료':' 유료'));let art;
       if(entry.id.startsWith('img:')){art=document.createElement('img');art.src=customProfileImages[entry.id.slice(4)];art.alt=''}else{art=document.createElement('span');art.textContent=entry.id}button.append(art);const tag=document.createElement('small');tag.textContent=entry.free?'무료':'유료';button.append(tag);
-      button.onclick=()=>{if(!entry.free){alert('상점 구매·이용권은 실제 계정 연결 후 사용할 수 있습니다.');return}selectedProfile=entry.id;byId('profile-selected').textContent=entry.id;byId('profile-character-name').textContent=entry.id+' 프로필';document.querySelectorAll('.profile-symbol').forEach(el=>el.textContent=entry.id);grid.querySelectorAll('button').forEach(el=>el.setAttribute('aria-pressed',String(el===button)))};grid.append(button)}
+      button.onclick=async()=>{if(!entry.free){alert('유료 프로필은 구매 기능 연결 후 선택할 수 있습니다.');return}if(window.qtimeSaveProfileIcon){try{await window.qtimeSaveProfileIcon(entry.id)}catch(error){alert('프로필 저장 실패: '+error.message);return}}selectedProfile=entry.id;byId('profile-selected').textContent=entry.id;byId('profile-character-name').textContent=entry.id+' 프로필';document.querySelectorAll('.profile-symbol').forEach(el=>el.textContent=entry.id);grid.querySelectorAll('button').forEach(el=>el.setAttribute('aria-pressed',String(el===button)))};grid.append(button)}
     if(window.qtime?.onUpdateStatus)window.qtime.onUpdateStatus(message=>{byId('status').textContent=message});
 
-    // Local screen preview only: the existing 0.1.5 lobby is not connected to online auth.
-    let selectedShoutColor='#ffcf56',shoutQueue=[],shoutRunning=false;
-    document.querySelectorAll('.swatches button').forEach(button=>button.addEventListener('click',()=>{selectedShoutColor=button.dataset.color;document.querySelectorAll('.swatches button').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));byId('shout-palette').open=false}));
-    function nextShout(){if(shoutRunning||!shoutQueue.length)return;shoutRunning=true;const {message,color}=shoutQueue.shift();const notice=document.createElement('div');notice.className='shout-notice';notice.setAttribute('role','status');notice.style.setProperty('--shout-color',color);const title=document.createElement('small');title.textContent='📣 확성기 · 전체 알림';const name=document.createElement('strong');name.textContent='동동 · ';const body=document.createElement('span');body.className='message';body.textContent=message;notice.append(title,name,body);document.body.append(notice);setTimeout(()=>{notice.remove();shoutRunning=false;nextShout()},3000)}
-    byId('shout-form').addEventListener('submit',event=>{event.preventDefault();const input=byId('shout-input');const message=input.value.trim();if(!message)return;shoutQueue.push({message,color:selectedShoutColor});input.value='';nextShout()});
   </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -567,7 +560,7 @@ async function enter(user){
  const {data,error}=await client.from('profiles').select('id,nickname,profile_icon,level,exp,coins,role').eq('id',user.id).single();
  if(error||!data)throw Error('프로필을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
  const role=data.role==='superadmin'?'최고관리자':data.role==='operator'?'운영자':'';
- document.querySelector('.user-name').textContent=(data.nickname||'도전자')+(role?' · '+role:'');
+ document.querySelector('.user-name').textContent=(data.nickname||'도전자')+(role?' · '+role:'');const currentCard=document.querySelector('.user-card .user-info strong');if(currentCard)currentCard.textContent=(data.nickname||'도전자')+' (나)';
  document.querySelector('.wallet').textContent='🪙 '+Number(data.coins||0).toLocaleString()+' P';
  document.querySelector('.level').firstChild.textContent='LV.'+Number(data.level||1)+' ';
  document.querySelector('.level small').textContent='EXP '+Number(data.exp||0)+'/100';
@@ -621,5 +614,6 @@ client.auth.getSession().then(async({data,error})=>{
 }).catch(err=>setStatus('계정 상태 확인 실패: '+err.message));
 })();
 </script>
-</body>
+
+<script src="./visual-lobby.js"></script></body>
 </html>
