@@ -5,7 +5,7 @@
   const randomRoomTitles=['퀴즈 우리 함께 풀어요!','오늘도 퀴즈 한 판!','다 같이 정답을 찾아봐요','가볍게 즐기는 퀴즈 대결','퀴즈 고수 모두 모여요!','함께 도전하는 퀴즈방'];
   let client=null,user=null,profile=null,channel='자유채널',roomId=null,room=null,match=null;
   let roomPoll=null,lobbyPoll=null,shoutPoll=null,refreshing=false,roomRefreshing=false,channelRefreshing=false,shoutRefreshing=false,epoch=0;
-  let channelUsers=[],lastShout=0,shoutInitialized=false,shoutQueue=[],showingShout=false,selectedProfile=null;
+  let channelUsers=[],lastShout=0,shoutInitialized=false,shoutQueue=[],showingShout=false,selectedProfile=null,lastInvite=0;
   const channelBaseline=new Map();
   const roomBaseline=new Map();
   const whisperBaseline=new Map();
@@ -25,11 +25,11 @@
       for(const entry of rows){
         const row=document.createElement('div');row.className='room-item';
         const label=document.createElement('strong');label.textContent=(entry.locked?'🔒 ':'')+(entry.title||'퀴즈방');
-        const detail=document.createElement('span');detail.textContent=` ${entry.mode==='cpu'?'컴퓨터 대전':'일반 대전'} · ${entry.status==='playing'?'게임 중':'대기 중'} · ${entry.count}/${entry.max_players}명`;
+        const detail=document.createElement('span');detail.textContent=` ${{normal:'일반 대전',cpu:'컴퓨터 대전',team:'팀전',team_cpu:'컴퓨터 포함 팀전'}[entry.mode]||'일반 대전'} · ${entry.status==='playing'?'게임 중':'대기 중'} · ${entry.count}/${entry.max_players}명`;
         const button=document.createElement('button');button.type='button';button.textContent='입장';
         // CPU 방은 가득 차 있어도 실제 참가자가 들어오면 CPU 한 명을 교체한다.
         button.disabled=entry.status==='waiting'&&entry.count>=entry.max_players&&
-          (entry.mode!=='cpu'||Number(entry.cpu_count||0)===0);
+          (!String(entry.mode).includes('cpu')||Number(entry.cpu_count||0)===0);
         button.textContent=entry.status==='playing'?'게임 중':button.disabled?'인원 마감':'입장';
         button.onclick=()=>entry.status==='playing'?alert('게임이 진행 중입니다. 종료 후 입장해 주세요.'):join(entry);
         row.append(label,detail,button);$('room-list').append(row);
@@ -137,11 +137,11 @@
     const title=$('room-title').value.trim()||randomRoomTitles[Math.floor(Math.random()*randomRoomTitles.length)];
     const difficulty={'쉬움':1,'보통':2,'어려움':3,'넌센스':4}[$('room-difficulty').value]||2;
     const maxPlayers=Number.parseInt($('room-capacity').value,10)||10;
-    const mode=$('room-mode').value==='cpu'?'cpu':'normal';
+    const mode=['normal','cpu','team','team_cpu'].includes($('room-mode').value)?$('room-mode').value:'normal';
     const password=$('room-password').value.trim();
     if(password&&!/^[0-9]{4,6}$/.test(password)){alert('비밀번호는 숫자 4~6자리입니다.');return}
     try{
-      const id=await rpc('qtime_room_create_v3',{p_channel:channels[channel],p_title:title,p_difficulty:difficulty,p_max_players:mode==='cpu'?10:maxPlayers,p_password:password||null,p_mode:mode});
+      const id=await rpc('qtime_room_create_v4',{p_channel:channels[channel],p_title:title,p_difficulty:difficulty,p_max_players:mode.includes('cpu')?10:maxPlayers,p_password:password||null,p_mode:mode});
       $('room-dialog').close();$('room-title').value='';$('room-password').value='';await refreshRooms();await openRoom(id);
     }catch(error){alert('방 생성 실패: '+errorText(error))}
   }
@@ -188,6 +188,21 @@
       await refreshRoom();
     }
     catch(error){alert('방 채팅 실패: '+errorText(error))}
+  }
+  async function invitePeople(){
+    if(!roomId)return;
+    try{
+      const {data,error}=await client.rpc('qtime_friend_list',{});if(error)throw error;
+      const friends=(data||[]).filter(entry=>entry.status==='accepted'&&entry.id!==user.id);
+      if(!friends.length){alert('초대할 수 있는 친구가 없습니다.');return}
+      const name=prompt('초대할 친구의 닉네임을 입력하세요.\n'+friends.map(entry=>entry.nickname).join(', '));if(!name)return;
+      const target=friends.find(entry=>entry.nickname===name.trim());if(!target){alert('일치하는 친구가 없습니다.');return}
+      await rpc('qtime_invite_send',{p_room_id:roomId,p_recipient:target.user_id});alert('방 초대를 보냈습니다.');
+    }catch(error){alert('초대 실패: '+errorText(error))}
+  }
+  async function refreshInvites(){
+    if(!client||!user||roomId||localStorage.getItem('qtime-invites')==='off')return;
+    try{const invites=await rpc('qtime_invite_inbox',{});const invite=(invites||[]).find(row=>Number(row.id)>lastInvite);if(!invite)return;lastInvite=Number(invite.id);const accept=confirm(`${invite.inviter_name}님이 "${invite.room_title}" 방으로 초대했습니다.\n${invite.mode_label} · ${invite.count}/${invite.max_players}명${invite.locked?' · 비밀번호 방':''}\n입장할까요?`);const id=await rpc('qtime_invite_respond',{p_invite_id:invite.id,p_accept:accept});if(accept&&id)await openRoom(id)}catch(error){status('초대 확인 오류: '+errorText(error))}
   }
   function whisperRequest(input,people,forcedId){
     const match=String(input).match(/^\/(?:w|귓속말)\s+(\S+)\s+([\s\S]+)$/i);
@@ -291,7 +306,7 @@
   $('cancel').onclick=()=>{$('room-dialog').close()};
   $('room-form').addEventListener('submit',create);
   $('room-mode').addEventListener('change',()=>{
-    const cpu=$('room-mode').value==='cpu';
+    const cpu=$('room-mode').value.includes('cpu');
     if(cpu)$('room-capacity').value='10명';
     $('room-capacity').disabled=cpu;
     $('room-capacity').title=cpu?'컴퓨터 대전은 총 10명으로 진행됩니다.':'';
@@ -325,12 +340,12 @@
     if(match)displayMatch(match);
     nextShout();
   });
-  window.qtimeRoomServer={closeRoom,setReady,sendRoomMessage,start,answer,viewProfile,kickPlayer,transferHost};
+  window.qtimeRoomServer={closeRoom,setReady,sendRoomMessage,start,answer,viewProfile,kickPlayer,transferHost,invitePeople};
   window.addEventListener('qtime:signed-in',event=>{
     reset();({client,user,profile}=event.detail);
     refreshRooms();refreshChannel();refreshShouts();
     refreshShopBalance().catch(error=>status('상점 연결 오류: '+errorText(error)));
-    lobbyPoll=setInterval(()=>{refreshRooms();refreshChannel()},4000);
+    lobbyPoll=setInterval(()=>{refreshRooms();refreshChannel();refreshInvites()},4000);refreshInvites();
     shoutPoll=setInterval(refreshShouts,1000);
     rpc('qtime_my_room').then(id=>{if(id&&user&&!roomId)openRoom(id)})
       .catch(error=>status('기존 방 확인 실패: '+errorText(error)));

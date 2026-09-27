@@ -35,6 +35,7 @@
     const signature=members.map(m=>`${m.user_id}:${scores.get(m.user_id)??m.score}`).join('|');
     if(!force&&arena.dataset.signature===signature)return;
     arena.dataset.signature=signature;arena.replaceChildren();
+    const speechLayer=document.createElement('div');speechLayer.className='speech-layer';arena.append(speechLayer);
     arena.style.setProperty('--player-count',String(Math.max(1,Math.min(10,members.length))));
     members.slice(0,10).forEach((member,i)=>{
       const card=document.createElement('div');card.className='arena-player';card.dataset.userId=member.user_id;
@@ -51,11 +52,15 @@
   }
   function showBubble(message,remember=true){
     if(remember){activeBubble=message;bubbleUntil=Date.now()+3000}
-    const card=[...$('arena').children].find(el=>el.dataset.userId===message.sender_id);
+    const arena=$('arena');
+    const card=[...arena.querySelectorAll('.arena-player')].find(el=>el.dataset.userId===message.sender_id);
     if(!card)return;
-    card.querySelector('.speech-bubble')?.remove();
+    const layer=arena.querySelector('.speech-layer');if(!layer)return;
+    layer.querySelector(`[data-sender="${CSS.escape(String(message.sender_id))}"]`)?.remove();
     const bubble=document.createElement('div');bubble.className='speech-bubble';
-    bubble.textContent=message.message.slice(0,30);card.append(bubble);
+    bubble.dataset.sender=message.sender_id;bubble.textContent=message.message.slice(0,40);layer.append(bubble);
+    const width=168,center=card.offsetLeft+card.offsetWidth/2;
+    bubble.style.left=Math.max(8,Math.min(arena.clientWidth-width-8,center-width/2))+'px';bubble.style.top='8px';
     setTimeout(()=>{if(bubble.isConnected)bubble.remove()},Math.max(0,bubbleUntil-Date.now()));
   }
   function roomUpdate(next,id){
@@ -67,6 +72,7 @@
     members.slice(0,10).forEach(member=>{
       const card=document.createElement('article');card.className='slot compact';
       if(member.user_id===id)card.classList.add('mine');
+      if(member.team)card.classList.add('team-'+member.team.toLowerCase());
       const icon=document.createElement('span');icon.className='profile-icon';
       window.qtimeProfileIcon?.set(icon,member.profile_icon);
       const body=document.createElement('div');body.className='member';
@@ -75,6 +81,7 @@
       body.append(name,level);
       const badge=document.createElement('span');badge.className='slot-tag';
       badge.textContent=member.is_cpu?'🤖 CPU · 준비 완료':member.user_id===next.host_id?'👑 방장':member.ready?'✓ 준비 완료':'준비 전';
+      if(member.team)badge.textContent=`${member.team}팀 · `+badge.textContent;
       card.append(icon,body,badge);
       if(member.user_id!==id&&!member.is_cpu){
         const view=document.createElement('button');view.className='profile-view-btn';view.type='button';
@@ -96,7 +103,7 @@
     }
     document.querySelector('.section-title strong').textContent=`${members.length} / ${next.max_players}`;
     const pills=document.querySelectorAll('.room-head .pill');
-    if(pills[0])pills[0].textContent=next.mode==='cpu'?'컴퓨터 대전':'일반 대전';
+    if(pills[0])pills[0].textContent=({normal:'일반 대전',cpu:'컴퓨터 대전',team:'팀전',team_cpu:'컴퓨터 포함 팀전'})[next.mode]||'일반 대전';
     if(pills[1])pills[1].textContent=({1:'쉬움',2:'보통',3:'어려움',4:'넌센스'})[next.difficulty]||'보통';
     if(pills[2])pills[2].textContent=`${members.length} / ${next.max_players}명`;
     const mine=members.find(m=>m.user_id===id);
@@ -188,6 +195,10 @@
     $('countdown').hidden=true;screen('game-screen');
     const ranks=$('result-score');ranks.replaceChildren();
     const scores=next.scores||[];
+    if(room?.mode?.startsWith('team')){
+      const teams={A:0,B:0};for(const entry of scores){const member=room.members?.find(item=>item.user_id===entry.user_id);if(member?.team)teams[member.team]+=Number(entry.score||0)}
+      const teamRow=document.createElement('div');teamRow.className='result-row team-total';teamRow.textContent=`A팀 ${teams.A}점  ·  B팀 ${teams.B}점`;ranks.append(teamRow);
+    }
     scores.forEach((entry,i)=>{
       const rank=scores.findIndex(item=>item.score===entry.score)+1;
       const row=document.createElement('div');row.className='result-row';
@@ -267,6 +278,7 @@
   }
   $('ready').onclick=()=>send('setReady',!room?.members?.find(m=>m.user_id===meId)?.ready);
   $('start').onclick=()=>send('start');
+  $('invite').onclick=()=>send('invitePeople');
   $('leave').onclick=()=>send('closeRoom');
   $('back-room').onclick=()=>{
     if(confirm('게임 중 방을 나가시겠습니까? 이 경기의 경험치와 게임 재화는 지급되지 않습니다.'))send('closeRoom');

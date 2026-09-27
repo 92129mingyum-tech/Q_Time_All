@@ -1,4 +1,10 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Q-TIME · 프로필 이모티콘 10명 대기실</title><style>
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Q-TIME · 프로필 이모티콘 10명 대기실</title>
+<style>
 :root{font-family:Arial,'Malgun Gothic',sans-serif;color:#eef8ff;background:#101d2d}*{box-sizing:border-box}body{margin:0;overflow:hidden;background:radial-gradient(circle at 50% 0,#274663,#101d2d 75%)}button,input{font:inherit}button{cursor:pointer}#stage{position:absolute;transform-origin:top left;width:1360px;height:800px;padding:24px 30px 20px;display:grid;grid-template-rows:62px minmax(0,1fr) 32px;gap:15px;background:linear-gradient(135deg,#15283b,#192e43 48%,#11243a)}.top{display:flex;align-items:center;justify-content:space-between}.brand{font-size:33px;font-style:italic;font-weight:1000;letter-spacing:-2px;text-shadow:0 2px 2px #071421}.brand b{color:#ffbf4c;font-size:41px}.brand small{display:block;font-size:10px;font-style:normal;letter-spacing:3px;text-align:center;color:#b8eaff;margin-top:-5px}.top nav{display:flex;gap:9px}.top nav span{border:1px solid #4c7188;border-radius:10px;padding:9px 16px;background:#253d53;color:#bfd4e2}.top nav .active{color:#ffdf98;border-color:#b58a44}.page{min-height:0}.screen{display:none;height:100%;min-height:0}.screen.active{display:grid}.room{grid-template-rows:104px minmax(0,1fr);gap:14px}.room-head,.game-head{background:#203950;border:1px solid #55778d;border-radius:18px;box-shadow:0 7px 0 #0c1b2d;padding:16px 22px;display:flex;align-items:center;justify-content:space-between}.eyebrow{font-size:11px;color:#91d8ef;letter-spacing:2px;font-weight:900}.room-head h1,.game-head h1{font-size:28px;margin:5px 0 4px}.muted{color:#a9c3d3;font-size:13px}.pills{display:flex;gap:8px}.pill{padding:10px 14px;background:#2b4e66;border:1px solid #628da5;border-radius:99px;font-weight:800;color:#e6f6ff}.room-layout{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:14px;min-height:0}.panel{background:#20364c;border:1px solid #4d7088;border-radius:18px;box-shadow:inset 0 1px #ffffff16;min-height:0;padding:19px}.players{display:flex;flex-direction:column}.section-title{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:15px}.section-title h2,.side h2{font-size:20px;margin:0}.section-title strong{color:#ffcf74}.slots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,1fr);gap:13px;flex:1;min-height:0}.slot{border:1px solid #537992;border-radius:15px;background:linear-gradient(130deg,#2a4861,#233d56);display:flex;align-items:center;gap:16px;padding:14px;position:relative;overflow:hidden}.slot.empty{background:#1c3145;border-style:dashed;color:#819bad;justify-content:center}.portrait{height:100%;width:100px;display:flex;align-items:end;justify-content:center;border-radius:12px;background:radial-gradient(circle at 50% 30%,#6dc9e44d,#18324b 75%);overflow:hidden;flex:none}.portrait img{height:130%;max-width:100%;object-fit:contain;object-position:bottom}.portrait .emoji{font-size:65px;margin-bottom:12px}.member strong{display:block;font-size:19px;margin:0 0 7px}.member small{color:#a9c6d5}.tag{display:inline-block;margin-top:12px;padding:5px 11px;background:#3b6c88;border-radius:8px;color:#dbf4ff;font-size:12px;font-weight:900}.tag.host{background:#9b6825;color:#fff0be}.tag.ready{background:#267668;color:#dafff0}.side{display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;gap:12px}.chat{background:#15293d;border:1px solid #41617a;border-radius:11px;padding:13px;overflow:hidden;font-size:13px;line-height:1.75}.chat p{margin:0 0 8px}.chat b{color:#83ddf4}.chat .system{color:#a8b9c9}.compose{display:flex;gap:6px}.compose input{min-width:0;flex:1;background:#11283c;border:1px solid #5d819a;border-radius:9px;padding:11px;color:white}.compose button,.secondary{border:1px solid #6a99b0;background:#2d5a75;color:white;border-radius:9px;padding:9px 14px;font-weight:800}.action-card{border-top:1px solid #4e7189;padding-top:13px}.action-card p{margin:0 0 12px;color:#b9d4e3;font-size:13px}.actions{display:flex;gap:8px}.actions button{flex:1;min-height:44px;border-radius:10px;font-weight:900}.ready-btn{background:#ffbd48;border:0;color:#3b2b15}.start-btn{background:#6cdbb8;border:0;color:#103429}.start-btn:disabled{background:#556e70;color:#a9c2c1;cursor:default}.leave{background:#253c53;border:1px solid #61839a;color:#e6f4ff}.game{grid-template-rows:90px minmax(0,1fr);gap:14px}.game-head h1{margin:3px 0}.timer{font-size:34px;font-weight:1000;color:#ffe184;text-align:right}.timer small{display:block;font-size:11px;color:#bdd1de}.game-layout{display:grid;grid-template-columns:minmax(0,1fr) 284px;gap:14px;min-height:0}.question-panel{display:flex;flex-direction:column}.question-top{display:flex;justify-content:space-between;color:#9fe1ed;font-weight:900}.progress{height:9px;border-radius:9px;background:#38566b;overflow:hidden;margin:15px 0}.progress i{display:block;height:100%;background:#ffc456;width:100%;transition:width .1s linear}.question{display:grid;place-items:center;flex:1;min-height:80px;background:#152c42;border:1px solid #52778b;border-radius:16px;font-size:28px;font-weight:900;line-height:1.35;text-align:center;padding:22px}.answers{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}.answers button{min-height:80px;border:2px solid #78a9bf;background:#e9f7ff;color:#244662;border-radius:13px;font-size:18px;font-weight:900}.answers button:hover{border-color:#ffcb64;background:#fff3d2}.answers button.selected{background:#fbd47c;border-color:#ff9b3b}.answers button.correct{background:#9deac5;border-color:#4bbb83}.answers button.wrong{background:#ffc0bd;border-color:#fa777d}.answers button:disabled{cursor:default}.feedback{height:27px;margin:9px 0 0;text-align:center;color:#ffdf8e;font-weight:800}.scoreboard h2{margin:0 0 13px}.score{display:flex;align-items:center;gap:10px;background:#2a475f;border:1px solid #50748b;border-radius:11px;padding:11px;margin-bottom:9px}.score .rank{color:#ffdb81;font-size:19px;font-weight:900;width:24px}.score .name{flex:1}.score strong{color:#a9f4da}.scoreboard .footnote{font-size:13px;color:#bad0de;line-height:1.6;margin-top:18px}.bottom{display:flex;align-items:center;justify-content:space-between;color:#8db1c9;font-size:12px}.demo{color:#ffe2a5;font-weight:700}.result{display:none;position:absolute;inset:0;background:#0b1722bd;place-items:center}.result.show{display:grid}.result-card{width:500px;background:#24455d;border:2px solid #8cc8dc;border-radius:22px;text-align:center;padding:36px;box-shadow:0 20px 60px #0009}.result-card h2{font-size:33px;margin:8px 0}.result-card p{line-height:1.6}.result-card button{padding:13px 30px;background:#ffbd48;border:0;border-radius:11px;font-weight:900}
 .slots.ten{grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:10px}.slot.compact{min-width:0;flex-direction:column;justify-content:center;gap:6px;text-align:center;padding:8px 6px}.slot.compact .profile-icon{width:67px;height:67px;border-radius:18px;background:#d9f3ff;border:2px solid #80c7e6;display:grid;place-items:center;font-size:42px;box-shadow:0 3px 0 #346580}.slot.compact .member strong{font-size:16px;margin:0 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}.slot.compact .member small{font-size:12px}.slot.compact .slot-tag{color:#ffda8b;font-size:11px;font-weight:900;min-height:14px}.slot.compact.empty{color:#86a6b9}.slot.compact.empty .empty-number{width:58px;height:58px;border:1px dashed #5a8298;border-radius:16px;display:grid;place-items:center;font-size:23px;color:#6f96ac}.slot.compact.empty span:last-child{font-size:12px}
 /* 게임 화면: Q-TIME 색상으로 정리한 문제판과 10인 캐릭터 무대 */
@@ -50,8 +56,10 @@
 .game .arena-player .plate{top:98px;bottom:auto;height:75px;min-height:75px;gap:2px;padding:4px}
 .game .arena-player .plate span{min-height:30px;height:30px;padding:3px 2px;line-height:20px;font-size:15px}
 .game .arena-player .plate b{padding:4px 2px;line-height:19px;font-size:16px}
-.game .speech-bubble{bottom:153px}
-.side .chat{overflow-y:auto;min-height:0}.game .game-layout{position:relative}.game-chat-history{position:absolute;right:12px;bottom:3px;width:175px;z-index:25;color:#eaf8ff;font-size:13px}.game-chat-history summary{list-style:none;cursor:pointer;text-align:center;border:1px solid #70a6bd;border-radius:9px;background:#2c526b;padding:10px 7px;font-weight:900}.game-chat-history summary::-webkit-details-marker{display:none}.game-chat-history[open] .game-chat-log{position:absolute;right:0;bottom:calc(100% + 7px);width:300px;max-width:calc(100vw - 30px);height:180px;overflow-y:auto;overscroll-behavior:contain;border:1px solid #75a8c1;border-radius:10px;background:#142f45;padding:10px;box-shadow:0 10px 26px #0009;scrollbar-width:thin;scrollbar-color:#81bad1 #193248}.game-chat-log p{margin:0 0 6px;line-height:1.35;overflow-wrap:anywhere}.game-chat-log b{color:#87daf5}</style><link rel="stylesheet" href="./connection-fixes.css"><style id="fixed-game-layout">
+.game .arena{overflow:hidden}.speech-layer{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:30}.game .speech-layer .speech-bubble{position:absolute;width:168px;min-width:0;max-width:168px;bottom:auto;transform:none;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-height:18px;max-height:52px;overflow:hidden;overflow-wrap:break-word;word-break:keep-all;white-space:normal}
+.side .chat{overflow-y:auto;min-height:0}.game .game-layout{position:relative}.game-chat-history{position:absolute;right:12px;bottom:3px;width:175px;z-index:25;color:#eaf8ff;font-size:13px}.game-chat-history summary{list-style:none;cursor:pointer;text-align:center;border:1px solid #70a6bd;border-radius:9px;background:#2c526b;padding:10px 7px;font-weight:900}.game-chat-history summary::-webkit-details-marker{display:none}.game-chat-history[open] .game-chat-log{position:absolute;right:0;bottom:calc(100% + 7px);width:300px;max-width:calc(100vw - 30px);height:180px;overflow-y:auto;overscroll-behavior:contain;border:1px solid #75a8c1;border-radius:10px;background:#142f45;padding:10px;box-shadow:0 10px 26px #0009;scrollbar-width:thin;scrollbar-color:#81bad1 #193248}.game-chat-log p{margin:0 0 6px;line-height:1.35;overflow-wrap:anywhere}.game-chat-log b{color:#87daf5}</style>
+<link rel="stylesheet" href="./connection-fixes.css">
+<style id="fixed-game-layout">
 html,body{width:100%;height:100%;min-height:0;overflow:hidden!important;overscroll-behavior:none}
 #stage{overflow:hidden;touch-action:none}
 .game,.game-layout,.game .question-panel{overflow:hidden!important;overscroll-behavior:none}
@@ -62,4 +70,191 @@ html,body{width:100%;height:100%;min-height:0;overflow:hidden!important;overscro
 .result-row{padding:6px 9px;margin-bottom:4px;font-size:13px}
 .result-explanations{font-size:11px;line-height:1.22}
 .result-explanations p{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:4px}
-</style></head><body><div id="stage"><header class="top"><div class="brand"><b>Q</b>-TIME<small>QUIZ BATTLE</small></div><nav><span class="active">게임방</span><span>내 프로필</span><span>랭킹</span><span>상점</span><span>설정</span></nav></header><main class="page"><section class="screen room active" id="room-screen"><header class="room-head"><div><div class="eyebrow">QUIZ BATTLE ROOM · #1024</div><h1>별빛 퀴즈 대결</h1><div class="muted">방장 민겸 · 자유채널</div></div><div class="pills"><span class="pill">👥 일반 대전</span><span class="pill">⭐ 보통</span><span class="pill">2 / 10명</span></div></header><div class="room-layout"><section class="panel players"><div class="section-title"><h2>참가자 <strong>2 / 10</strong></h2><span class="muted">모두 준비하면 방장이 시작할 수 있어요</span></div><div class="slots ten"><article class="slot compact"><span class="profile-icon">🐶</span><div class="member"><strong>민겸</strong><small>LV.12</small></div><span class="slot-tag">👑 방장</span></article><article class="slot compact"><span class="profile-icon">🐱</span><div class="member"><strong>다온</strong><small>LV.8</small></div><span class="slot-tag">✓ 준비 완료</span></article><article class="slot compact empty"><span class="empty-number">03</span><span>참가자 대기 중</span></article><article class="slot compact empty"><span class="empty-number">04</span><span>참가자 대기 중</span></article><article class="slot compact empty"><span class="empty-number">05</span><span>참가자 대기 중</span></article><article class="slot compact empty"><span class="empty-number">06</span><span>참가자 대기 중</span></article><article class="slot compact empty"><span class="empty-number">07</span><span>참가자 대기 중</span></article><article class="slot compact empty"><span class="empty-number">08</span><span>참가자 대기 중</span></article><article class="slot compact empty"><span class="empty-number">09</span><span>참가자 대기 중</span></article><article class="slot compact empty"><span class="empty-number">10</span><span>참가자 대기 중</span></article></div></section><aside class="panel side"><h2>💬 방 채팅</h2><div class="chat" id="chat"><p class="system">민겸님이 방을 만들었습니다.</p><p><b>다온</b> 안녕하세요! 같이 게임해요 👋</p><p><b>민겸</b> 좋아요, 준비 부탁드려요!</p></div><form class="compose" id="chat-form"><input id="chat-input" maxlength="80" placeholder="방 참가자에게 메시지 입력" aria-label="방 채팅"><button>전송</button></form><div class="action-card"><p id="ready-hint">방장도 준비를 누르면 게임을 시작할 수 있어요.</p><div class="actions"><button class="leave" id="leave">나가기</button><button class="ready-btn" id="ready">준비하기</button><button class="start-btn" id="start" disabled>게임 시작</button></div></div></aside></div></section><div class="countdown" id="countdown" hidden aria-live="assertive"><span id="countdown-value">3</span><small>QUIZ BATTLE</small></div><section class="screen game" id="game-screen"><div class="game-layout"><div class="arena" id="arena" aria-label="게임 참가 캐릭터"></div><div class="game-hud"><span>ROUND <b id="round-label">1 / 10</b></span><span>SCORE <b id="hud-score">0점</b></span><span>COMBO <b id="hud-combo">0</b></span><span class="timer" id="timer">7초</span><button class="secondary" id="back-room">게임 나가기</button></div><section class="panel question-panel"><div class="question-top"><span id="category">일반 상식</span><span>정답 100점 + 시간 + 콤보</span></div><div class="progress"><i id="time-bar"></i></div><div class="question" id="question">대한민국의 수도는 어디일까요?</div><p class="feedback" id="feedback">답을 고르고 7초가 끝날 때까지 변경할 수 있습니다.</p><div class="explanation" id="explanation" hidden></div></section><div class="answers" id="answers"><button>① 서울</button><button>② 부산</button><button>③ 인천</button><button>④ 대전</button></div><form class="game-chat" id="game-chat-form"><input id="game-chat-input" maxlength="30" placeholder="게임 중 채팅 · 최대 30자" aria-label="게임 채팅"><button>전송</button></form></div></section></main><footer class="bottom"><span>Q-TIME · 자유채널</span><span class="demo">온라인 대전 · 서버 시간 기준으로 진행됩니다.</span></footer><div class="result" id="result"><div class="result-card"><div class="eyebrow">MATCH RESULT</div><h2>퀴즈 대결 종료!</h2><div id="result-score" class="result-ranks"></div><div class="result-explanations" id="result-explanations"></div><p class="result-timer" id="result-timer">7초 뒤 방으로 돌아갑니다</p><div class="result-actions"><button id="result-back">방으로 돌아가기</button><button id="result-exit">나가기</button></div></div></div></div><script src="./profile-icons.js"></script><script src="./chat-commands.js"></script><script src="./audio.js"></script><script src="./online-game.js"></script></body></html>
+</style>
+</head>
+<body>
+<div id="stage">
+<header class="top">
+<div class="brand">
+<b>Q</b>-TIME<small>QUIZ BATTLE</small>
+</div>
+<nav>
+<span class="active">게임방</span>
+<span>내 프로필</span>
+<span>랭킹</span>
+<span>상점</span>
+<span>설정</span>
+</nav>
+</header>
+<main class="page">
+<section class="screen room active" id="room-screen">
+<header class="room-head">
+<div>
+<div class="eyebrow">QUIZ BATTLE ROOM · #1024</div>
+<h1>별빛 퀴즈 대결</h1>
+<div class="muted">방장 민겸 · 자유채널</div>
+</div>
+<div class="pills">
+<span class="pill">👥 일반 대전</span>
+<span class="pill">⭐ 보통</span>
+<span class="pill">2 / 10명</span>
+</div>
+</header>
+<div class="room-layout">
+<section class="panel players">
+<div class="section-title">
+<h2>참가자 <strong>2 / 10</strong>
+</h2>
+<span class="muted">모두 준비하면 방장이 시작할 수 있어요</span>
+</div>
+<div class="slots ten">
+<article class="slot compact">
+<span class="profile-icon">🐶</span>
+<div class="member">
+<strong>민겸</strong>
+<small>LV.12</small>
+</div>
+<span class="slot-tag">👑 방장</span>
+</article>
+<article class="slot compact">
+<span class="profile-icon">🐱</span>
+<div class="member">
+<strong>다온</strong>
+<small>LV.8</small>
+</div>
+<span class="slot-tag">✓ 준비 완료</span>
+</article>
+<article class="slot compact empty">
+<span class="empty-number">03</span>
+<span>참가자 대기 중</span>
+</article>
+<article class="slot compact empty">
+<span class="empty-number">04</span>
+<span>참가자 대기 중</span>
+</article>
+<article class="slot compact empty">
+<span class="empty-number">05</span>
+<span>참가자 대기 중</span>
+</article>
+<article class="slot compact empty">
+<span class="empty-number">06</span>
+<span>참가자 대기 중</span>
+</article>
+<article class="slot compact empty">
+<span class="empty-number">07</span>
+<span>참가자 대기 중</span>
+</article>
+<article class="slot compact empty">
+<span class="empty-number">08</span>
+<span>참가자 대기 중</span>
+</article>
+<article class="slot compact empty">
+<span class="empty-number">09</span>
+<span>참가자 대기 중</span>
+</article>
+<article class="slot compact empty">
+<span class="empty-number">10</span>
+<span>참가자 대기 중</span>
+</article>
+</div>
+</section>
+<aside class="panel side">
+<h2>💬 방 채팅</h2>
+<div class="chat" id="chat">
+<p class="system">민겸님이 방을 만들었습니다.</p>
+<p>
+<b>다온</b> 안녕하세요! 같이 게임해요 👋</p>
+<p>
+<b>민겸</b> 좋아요, 준비 부탁드려요!</p>
+</div>
+<form class="compose" id="chat-form">
+<input id="chat-input" maxlength="80" placeholder="방 참가자에게 메시지 입력" aria-label="방 채팅">
+<button>전송</button>
+</form>
+<div class="action-card">
+<p id="ready-hint">방장도 준비를 누르면 게임을 시작할 수 있어요.</p>
+<div class="actions">
+<button class="secondary" id="invite">사람 초대</button>
+<button class="leave" id="leave">나가기</button>
+<button class="ready-btn" id="ready">준비하기</button>
+<button class="start-btn" id="start" disabled>게임 시작</button>
+</div>
+</div>
+</aside>
+</div>
+</section>
+<div class="countdown" id="countdown" hidden aria-live="assertive">
+<span id="countdown-value">3</span>
+<small>QUIZ BATTLE</small>
+</div>
+<section class="screen game" id="game-screen">
+<div class="game-layout">
+<div class="arena" id="arena" aria-label="게임 참가 캐릭터">
+</div>
+<div class="game-hud">
+<span>ROUND <b id="round-label">1 / 10</b>
+</span>
+<span>SCORE <b id="hud-score">0점</b>
+</span>
+<span>COMBO <b id="hud-combo">0</b>
+</span>
+<span class="timer" id="timer">7초</span>
+<button class="secondary" id="back-room">게임 나가기</button>
+</div>
+<section class="panel question-panel">
+<div class="question-top">
+<span id="category">일반 상식</span>
+<span>정답 100점 + 시간 + 콤보</span>
+</div>
+<div class="progress">
+<i id="time-bar">
+</i>
+</div>
+<div class="question" id="question">대한민국의 수도는 어디일까요?</div>
+<p class="feedback" id="feedback">답을 고르고 7초가 끝날 때까지 변경할 수 있습니다.</p>
+<div class="explanation" id="explanation" hidden>
+</div>
+</section>
+<div class="answers" id="answers">
+<button>① 서울</button>
+<button>② 부산</button>
+<button>③ 인천</button>
+<button>④ 대전</button>
+</div>
+<form class="game-chat" id="game-chat-form">
+<input id="game-chat-input" maxlength="30" placeholder="게임 중 채팅 · 최대 30자" aria-label="게임 채팅">
+<button>전송</button>
+</form>
+</div>
+</section>
+</main>
+<footer class="bottom">
+<span>Q-TIME · 자유채널</span>
+<span class="demo">온라인 대전 · 서버 시간 기준으로 진행됩니다.</span>
+</footer>
+<div class="result" id="result">
+<div class="result-card">
+<div class="eyebrow">MATCH RESULT</div>
+<h2>퀴즈 대결 종료!</h2>
+<div id="result-score" class="result-ranks">
+</div>
+<div class="result-explanations" id="result-explanations">
+</div>
+<p class="result-timer" id="result-timer">7초 뒤 방으로 돌아갑니다</p>
+<div class="result-actions">
+<button id="result-back">방으로 돌아가기</button>
+<button id="result-exit">나가기</button>
+</div>
+</div>
+</div>
+</div>
+<script src="./profile-icons.js">
+</script>
+<script src="./chat-commands.js">
+</script>
+<script src="./audio.js">
+</script>
+<script src="./online-game.js">
+</script>
+</body>
+</html>
