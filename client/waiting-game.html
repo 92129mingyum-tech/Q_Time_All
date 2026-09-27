@@ -79,11 +79,11 @@ html,body{width:100%;height:100%;min-height:0;overflow:hidden!important;overscro
 <b>Q</b>-TIME<small>QUIZ BATTLE</small>
 </div>
 <nav>
-<span class="active">게임방</span>
-<span>내 프로필</span>
-<span>랭킹</span>
-<span>상점</span>
-<span>설정</span>
+<button type="button" class="active">게임방</button>
+<button type="button" data-room-menu="profile">내 프로필</button>
+<button type="button" data-room-menu="ranking">랭킹</button>
+<button type="button" data-room-menu="shop">상점</button>
+<button type="button" data-room-menu="settings">설정</button>
 </nav>
 </header>
 <main class="page">
@@ -173,6 +173,7 @@ html,body{width:100%;height:100%;min-height:0;overflow:hidden!important;overscro
 </form>
 <div class="action-card">
 <p id="ready-hint">방장도 준비를 누르면 게임을 시작할 수 있어요.</p>
+<div class="team-controls" id="team-controls" hidden><button type="button" id="join-red">RED 팀</button><button type="button" id="join-blue">BLUE 팀</button><button type="button" id="cpu-red">+ RED CPU</button><button type="button" id="cpu-blue">+ BLUE CPU</button></div>
 <div class="actions">
 <button class="secondary" id="invite">사람 초대</button>
 <button class="leave" id="leave">나가기</button>
@@ -225,6 +226,7 @@ html,body{width:100%;height:100%;min-height:0;overflow:hidden!important;overscro
 <input id="game-chat-input" maxlength="30" placeholder="게임 중 채팅 · 최대 30자" aria-label="게임 채팅">
 <button>전송</button>
 </form>
+<div class="game-items"><button type="button" id="half-hint">✂️ 반반 힌트 <b id="half-count">3</b></button><button type="button" id="audience-help">📊 도와줘 친구들! <b>∞</b></button></div>
 </div>
 </section>
 </main>

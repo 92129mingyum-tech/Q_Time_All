@@ -5,7 +5,7 @@
   let seenMessage=0, activeBubble=null, bubbleUntil=0, resultTimer=null;
   let seenPrivate=0;
   let clockOffset=0, lastRoundKey='', lastRevealKey='', lastResultKey='';
-  let optionOrder=[0,1,2,3];
+  let optionOrder=[0,1,2,3],halfLeft=3,halfRound=0,audienceRound=0;
   function shuffledOptions(key,count){
     let seed=2166136261;
     for(const char of key)seed=Math.imul(seed^char.charCodeAt(0),16777619)>>>0;
@@ -31,14 +31,17 @@
     if(!room)return;
     const arena=$('arena');
     const scores=new Map((match?.scores||[]).map(row=>[row.user_id,Number(row.score||0)]));
-    const members=room.members||[];
-    const signature=members.map(m=>`${m.user_id}:${scores.get(m.user_id)??m.score}`).join('|');
+    const members=room.members||[],isTeam=room.mode==='team';
+    const displayMembers=isTeam?[...members.filter(m=>m.team==='RED').slice(0,4),...Array(Math.max(0,4-members.filter(m=>m.team==='RED').length)).fill(null),...members.filter(m=>m.team==='BLUE').slice(0,4),...Array(Math.max(0,4-members.filter(m=>m.team==='BLUE').length)).fill(null)]:members.slice(0,10);
+    const signature=displayMembers.map((m,i)=>m?`${m.user_id}:${m.team}:${scores.get(m.user_id)??m.score}`:`empty:${i}`).join('|');
     if(!force&&arena.dataset.signature===signature)return;
-    arena.dataset.signature=signature;arena.replaceChildren();
+    arena.dataset.signature=signature;arena.replaceChildren();arena.classList.toggle('team-mode',isTeam);
     const speechLayer=document.createElement('div');speechLayer.className='speech-layer';arena.append(speechLayer);
     arena.style.setProperty('--player-count',String(Math.max(1,Math.min(10,members.length))));
-    members.slice(0,10).forEach((member,i)=>{
+    displayMembers.forEach((member,i)=>{
+      if(!member){const empty=document.createElement('div');empty.className='arena-player empty '+(i<4?'team-red':'team-blue');arena.append(empty);return}
       const card=document.createElement('div');card.className='arena-player';card.dataset.userId=member.user_id;
+      if(member.team)card.classList.add('team-'+member.team.toLowerCase());
       if(member.user_id===meId)card.classList.add('mine');
       const art=document.createElement('img');art.src=`./assets/characters/${i%2?'female':'male'}.png`;art.alt='';
       const plate=document.createElement('div');plate.className='plate';
@@ -66,10 +69,17 @@
   function roomUpdate(next,id){
     room=next;meId=id;
     $('room-screen').querySelector('h1').textContent=next.title||'퀴즈방';
-    const members=next.members||[],isHost=next.host_id===id;
+    let members=next.members||[],isHost=next.host_id===id;
+    if(next.mode==='team')members=[...members].sort((a,b)=>(a.team==='RED'?0:1)-(b.team==='RED'?0:1)||String(a.user_id).localeCompare(String(b.user_id)));
     document.querySelector('.room-head .muted').textContent=`방장 ${members.find(m=>m.user_id===next.host_id)?.nickname||'도전자'}`;
     const slots=document.querySelector('.slots.ten');slots.replaceChildren();
-    members.slice(0,10).forEach(member=>{
+    const waitingSlots=next.mode==='team'?[...members.filter(member=>member.team==='RED').slice(0,4),...Array(Math.max(0,4-members.filter(member=>member.team==='RED').length)).fill(null),...members.filter(member=>member.team==='BLUE').slice(0,4),...Array(Math.max(0,4-members.filter(member=>member.team==='BLUE').length)).fill(null)]:members.slice(0,10);
+    waitingSlots.forEach((member,index)=>{
+      if(!member){
+        const card=document.createElement('article');card.className=`slot compact empty team-${index<4?'red':'blue'}`;
+        const count=document.createElement('span');count.className='empty-number';count.textContent=String(index+1).padStart(2,'0');
+        const label=document.createElement('span');label.textContent=`${index<4?'RED':'BLUE'} 빈자리`;card.append(count,label);slots.append(card);return;
+      }
       const card=document.createElement('article');card.className='slot compact';
       if(member.user_id===id)card.classList.add('mine');
       if(member.team)card.classList.add('team-'+member.team.toLowerCase());
@@ -81,7 +91,7 @@
       body.append(name,level);
       const badge=document.createElement('span');badge.className='slot-tag';
       badge.textContent=member.is_cpu?'🤖 CPU · 준비 완료':member.user_id===next.host_id?'👑 방장':member.ready?'✓ 준비 완료':'준비 전';
-      if(member.team)badge.textContent=`${member.team}팀 · `+badge.textContent;
+      if(member.team)badge.textContent=`${member.team} · `+badge.textContent;
       card.append(icon,body,badge);
       if(member.user_id!==id&&!member.is_cpu){
         const view=document.createElement('button');view.className='profile-view-btn';view.type='button';
@@ -96,14 +106,15 @@
       }
       slots.append(card);
     });
-    for(let i=members.length;i<next.max_players;i++){
+    for(let i=members.length;next.mode!=='team'&&i<next.max_players;i++){
       const card=document.createElement('article');card.className='slot compact empty';
       const count=document.createElement('span');count.className='empty-number';count.textContent=String(i+1).padStart(2,'0');
       const label=document.createElement('span');label.textContent='참가자 대기 중';card.append(count,label);slots.append(card);
     }
     document.querySelector('.section-title strong').textContent=`${members.length} / ${next.max_players}`;
+    $('team-controls').hidden=next.mode!=='team';$('cpu-red').hidden=!isHost;$('cpu-blue').hidden=!isHost;
     const pills=document.querySelectorAll('.room-head .pill');
-    if(pills[0])pills[0].textContent=({normal:'일반 대전',cpu:'컴퓨터 대전',team:'팀전',team_cpu:'컴퓨터 포함 팀전'})[next.mode]||'일반 대전';
+    if(pills[0])pills[0].textContent=({normal:'일반 대전',cpu:'컴퓨터 대전',team:'팀전'})[next.mode]||'일반 대전';
     if(pills[1])pills[1].textContent=({1:'쉬움',2:'보통',3:'어려움',4:'넌센스'})[next.difficulty]||'보통';
     if(pills[2])pills[2].textContent=`${members.length} / ${next.max_players}명`;
     const mine=members.find(m=>m.user_id===id);
@@ -169,6 +180,7 @@
     $('feedback').textContent='';
     $('explanation').hidden=true;
     $('answers').replaceChildren();
+    halfRound=0;audienceRound=0;$('half-hint').disabled=halfLeft<=0;$('audience-help').classList.remove('active');
     optionOrder=shuffledOptions(`${next.started_at}:${next.round}`,(next.options||[]).length);
     optionOrder.forEach((original,index)=>{
       const button=document.createElement('button');button.type='button';
@@ -177,6 +189,8 @@
     });
     screen('game-screen');drawPlayers(true);
   }
+  function halfHintUpdate(data){if(!data)return;halfLeft=Number(data.remaining??halfLeft);halfRound=round;$('half-count').textContent=String(halfLeft);$('half-hint').disabled=true;for(const original of data.removed||[]){const shown=optionOrder.indexOf(Number(original));const button=$('answers').children[shown];if(button){button.classList.add('hint-removed');button.disabled=true;button.textContent='✕ 제거된 오답'}}}
+  function audienceUpdate(data){if(!data||Number(data.round)!==round)return;audienceRound=round;$('audience-help').classList.add('active');const rates=data.rates||[0,0,0,0],max=Math.max(...rates);[...$('answers').children].forEach((button,shown)=>{const original=optionOrder[shown],rate=Number(rates[original]||0);button.dataset.rate=rate+'%';button.classList.toggle('audience-top',max>0&&rate===max);button.querySelector('.vote-rate')?.remove();const label=document.createElement('span');label.className='vote-rate';label.textContent=` ${rate}%`;button.append(label)})}
   function selected(next){
     [...$('answers').children].forEach((button,i)=>button.classList.toggle('selected',optionOrder[i]===next.my_choice));
     const mark=$('my-answer-mark');if(mark)mark.textContent=next.my_choice==null?'':String(optionOrder.indexOf(next.my_choice)+1);
@@ -195,9 +209,11 @@
     $('countdown').hidden=true;screen('game-screen');
     const ranks=$('result-score');ranks.replaceChildren();
     const scores=next.scores||[];
-    if(room?.mode?.startsWith('team')){
-      const teams={A:0,B:0};for(const entry of scores){const member=room.members?.find(item=>item.user_id===entry.user_id);if(member?.team)teams[member.team]+=Number(entry.score||0)}
-      const teamRow=document.createElement('div');teamRow.className='result-row team-total';teamRow.textContent=`A팀 ${teams.A}점  ·  B팀 ${teams.B}점`;ranks.append(teamRow);
+    if(room?.mode==='team'){
+      const teams={RED:0,BLUE:0};for(const entry of scores){const member=room.members?.find(item=>item.user_id===entry.user_id);if(member?.team in teams)teams[member.team]+=Number(entry.score||0)}
+      const teamRow=document.createElement('div');teamRow.className='result-row team-total';
+      const winner=teams.RED===teams.BLUE?'무승부':teams.RED>teams.BLUE?'RED 팀 승리':'BLUE 팀 승리';
+      teamRow.textContent=`${winner} · RED ${teams.RED}점 / BLUE ${teams.BLUE}점`;ranks.append(teamRow);
     }
     scores.forEach((entry,i)=>{
       const rank=scores.findIndex(item=>item.score===entry.score)+1;
@@ -236,8 +252,10 @@
       const revealKey=key;
       if(lastRevealKey!==revealKey){
         lastRevealKey=revealKey;
+        audienceRound=0;$('audience-help').classList.remove('active');
         [...$('answers').children].forEach((button,i)=>{
           button.disabled=true;
+          button.classList.remove('audience-top');button.querySelector('.vote-rate')?.remove();
           button.classList.toggle('correct',optionOrder[i]===next.correct_index);
           button.classList.toggle('wrong',optionOrder[i]===next.my_choice&&optionOrder[i]!==next.correct_index);
         });
@@ -279,6 +297,8 @@
   $('ready').onclick=()=>send('setReady',!room?.members?.find(m=>m.user_id===meId)?.ready);
   $('start').onclick=()=>send('start');
   $('invite').onclick=()=>send('invitePeople');
+  $('join-red').onclick=()=>send('setTeam','RED');$('join-blue').onclick=()=>send('setTeam','BLUE');
+  $('cpu-red').onclick=()=>send('addTeamCpu','RED');$('cpu-blue').onclick=()=>send('addTeamCpu','BLUE');
   $('leave').onclick=()=>send('closeRoom');
   $('back-room').onclick=()=>{
     if(confirm('게임 중 방을 나가시겠습니까? 이 경기의 경험치와 게임 재화는 지급되지 않습니다.'))send('closeRoom');
@@ -293,8 +313,11 @@
     event.preventDefault();const input=$('game-chat-input'),message=input.value.trim().slice(0,30);
     if(!message)return;send('sendRoomMessage',message);input.value='';
   };
+  $('half-hint').onclick=()=>{if(phase!=='question'||halfRound===round||halfLeft<=0)return;send('useHalfHint',{round})};
+  $('audience-help').onclick=()=>{if(phase!=='question')return;audienceRound=round;send('useAudience',{round})};
   window.qtimeChatCommands?.attach($('chat-input'));
   window.qtimeChatCommands?.attach($('game-chat-input'));
+  document.querySelectorAll('[data-room-menu]').forEach(button=>button.onclick=()=>send('openRoomMenu',button.dataset.roomMenu));
   addEventListener('keydown',event=>{
     if(event.target.closest('input,textarea,[contenteditable]'))return;
     if(event.ctrlKey&&!event.altKey&&!event.shiftKey){
@@ -310,5 +333,5 @@
     if(phase==='question'){event.preventDefault();choose(Number(event.key)-1)}
   });
   addEventListener('resize',fit);fit();setInterval(updateClock,100);
-  window.qtimeRoomBridge={update:roomUpdate,matchUpdate,privateUpdate,shout};
+  window.qtimeRoomBridge={update:roomUpdate,matchUpdate,privateUpdate,shout,halfHintUpdate,audienceUpdate};
 })();

@@ -5,7 +5,7 @@
   const randomRoomTitles=['퀴즈 우리 함께 풀어요!','오늘도 퀴즈 한 판!','다 같이 정답을 찾아봐요','가볍게 즐기는 퀴즈 대결','퀴즈 고수 모두 모여요!','함께 도전하는 퀴즈방'];
   let client=null,user=null,profile=null,channel='자유채널',roomId=null,room=null,match=null;
   let roomPoll=null,lobbyPoll=null,shoutPoll=null,refreshing=false,roomRefreshing=false,channelRefreshing=false,shoutRefreshing=false,epoch=0;
-  let channelUsers=[],lastShout=0,shoutInitialized=false,shoutQueue=[],showingShout=false,selectedProfile=null,lastInvite=0;
+  let channelUsers=[],lastShout=0,shoutInitialized=false,shoutQueue=[],showingShout=false,selectedProfile=null,lastInvite=0,audienceRound=0;
   const channelBaseline=new Map();
   const roomBaseline=new Map();
   const whisperBaseline=new Map();
@@ -25,7 +25,7 @@
       for(const entry of rows){
         const row=document.createElement('div');row.className='room-item';
         const label=document.createElement('strong');label.textContent=(entry.locked?'🔒 ':'')+(entry.title||'퀴즈방');
-        const detail=document.createElement('span');detail.textContent=` ${{normal:'일반 대전',cpu:'컴퓨터 대전',team:'팀전',team_cpu:'컴퓨터 포함 팀전'}[entry.mode]||'일반 대전'} · ${entry.status==='playing'?'게임 중':'대기 중'} · ${entry.count}/${entry.max_players}명`;
+        const detail=document.createElement('span');detail.textContent=` ${{normal:'일반 대전',cpu:'컴퓨터 대전',team:'팀전'}[entry.mode]||'일반 대전'} · ${entry.status==='playing'?'게임 중':'대기 중'} · ${entry.count}/${entry.max_players}명`;
         const button=document.createElement('button');button.type='button';button.textContent='입장';
         // CPU 방은 가득 차 있어도 실제 참가자가 들어오면 CPU 한 명을 교체한다.
         button.disabled=entry.status==='waiting'&&entry.count>=entry.max_players&&
@@ -111,6 +111,7 @@
       if(roomId===selected){
         await rpc('qtime_record_win',{p_room_id:selected});
         displayMatch(currentMatch);
+        if(audienceRound&&currentMatch?.phase==='question'&&Number(currentMatch.round)===audienceRound){const audience=await rpc('qtime_audience_state',{p_room_id:selected,p_round:audienceRound});frame()?.qtimeRoomBridge?.audienceUpdate(audience)}else if(currentMatch?.phase!=='question')audienceRound=0;
       }
       const privateMessages=await rpc('qtime_whisper_inbox',{p_room_id:selected});
       if(roomId===selected){
@@ -137,11 +138,11 @@
     const title=$('room-title').value.trim()||randomRoomTitles[Math.floor(Math.random()*randomRoomTitles.length)];
     const difficulty={'쉬움':1,'보통':2,'어려움':3,'넌센스':4}[$('room-difficulty').value]||2;
     const maxPlayers=Number.parseInt($('room-capacity').value,10)||10;
-    const mode=['normal','cpu','team','team_cpu'].includes($('room-mode').value)?$('room-mode').value:'normal';
+    const mode=['normal','cpu','team'].includes($('room-mode').value)?$('room-mode').value:'normal';
     const password=$('room-password').value.trim();
     if(password&&!/^[0-9]{4,6}$/.test(password)){alert('비밀번호는 숫자 4~6자리입니다.');return}
     try{
-      const id=await rpc('qtime_room_create_v4',{p_channel:channels[channel],p_title:title,p_difficulty:difficulty,p_max_players:mode.includes('cpu')?10:maxPlayers,p_password:password||null,p_mode:mode});
+      const id=await rpc('qtime_room_create_v5',{p_channel:channels[channel],p_title:title,p_difficulty:difficulty,p_max_players:mode==='team'?8:mode==='cpu'?10:maxPlayers,p_password:password||null,p_mode:mode});
       $('room-dialog').close();$('room-title').value='';$('room-password').value='';await refreshRooms();await openRoom(id);
     }catch(error){alert('방 생성 실패: '+errorText(error))}
   }
@@ -166,6 +167,11 @@
     try{await rpc('qtime_room_transfer_host',{p_room_id:roomId,p_target_id:target});await refreshRoom()}
     catch(error){alert('방장 위임 실패: '+errorText(error))}
   }
+  async function setTeam(team){if(!roomId)return;try{await rpc('qtime_team_select',{p_room_id:roomId,p_team:team});await refreshRoom()}catch(error){alert('팀 선택 실패: '+errorText(error))}}
+  async function addTeamCpu(team){if(!roomId)return;try{await rpc('qtime_team_cpu_add',{p_room_id:roomId,p_team:team});await refreshRoom()}catch(error){alert('CPU 추가 실패: '+errorText(error))}}
+  async function useHalfHint(data){if(!roomId)return;try{const result=await rpc('qtime_half_hint_use',{p_room_id:roomId,p_round:data.round});frame()?.qtimeRoomBridge?.halfHintUpdate(result)}catch(error){alert('반반 힌트 사용 실패: '+errorText(error))}}
+  async function useAudience(data){if(!roomId)return;try{audienceRound=Number(data.round);const result=await rpc('qtime_audience_state',{p_room_id:roomId,p_round:audienceRound});frame()?.qtimeRoomBridge?.audienceUpdate(result)}catch(error){audienceRound=0;alert('도와줘 친구들 사용 실패: '+errorText(error))}}
+  function openRoomMenu(menu){const targets={profile:'#open-profile',ranking:'[data-pending="랭킹"]',settings:'[data-pending="설정"]'};if(menu==='shop'){window.qtimeShowFeature('./shop.html','Q-TIME 상점');return}document.querySelector(targets[menu])?.click()}
   async function closeRoom(leave=true){
     const id=roomId;roomId=null;room=match=null;clearInterval(roomPoll);roomPoll=null;
     if(leave&&id&&client){try{await rpc('qtime_room_leave',{p_room_id:id})}catch(error){alert('방 나가기 실패: '+errorText(error));roomId=id;roomPoll=setInterval(refreshRoom,650);return}}
@@ -306,10 +312,10 @@
   $('cancel').onclick=()=>{$('room-dialog').close()};
   $('room-form').addEventListener('submit',create);
   $('room-mode').addEventListener('change',()=>{
-    const cpu=$('room-mode').value.includes('cpu');
-    if(cpu)$('room-capacity').value='10명';
-    $('room-capacity').disabled=cpu;
-    $('room-capacity').title=cpu?'컴퓨터 대전은 총 10명으로 진행됩니다.':'';
+    const mode=$('room-mode').value,cpu=mode==='cpu',team=mode==='team';
+    if(cpu)$('room-capacity').value='10명';if(team)$('room-capacity').value='8명';
+    $('room-capacity').disabled=cpu||team;
+    $('room-capacity').title=cpu?'컴퓨터 대전은 총 10명입니다.':team?'팀전은 RED 4명, BLUE 4명입니다.':'';
   });
   $('public-profile-close').onclick=()=>$('public-profile-dialog').close();
   $('public-profile-done').onclick=()=>$('public-profile-dialog').close();
@@ -340,7 +346,9 @@
     if(match)displayMatch(match);
     nextShout();
   });
-  window.qtimeRoomServer={closeRoom,setReady,sendRoomMessage,start,answer,viewProfile,kickPlayer,transferHost,invitePeople};
+  window.qtimeRoomServer={closeRoom,setReady,sendRoomMessage,start,answer,viewProfile,kickPlayer,transferHost,invitePeople,setTeam,addTeamCpu,useHalfHint,useAudience,openRoomMenu};
+  window.qtimeRoomActive=()=>Boolean(roomId);
+  window.qtimeReturnToRoom=()=>{if(roomId)openRoom(roomId)};
   window.addEventListener('qtime:signed-in',event=>{
     reset();({client,user,profile}=event.detail);
     refreshRooms();refreshChannel();refreshShouts();
