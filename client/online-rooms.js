@@ -21,13 +21,15 @@
       const rows=await rpc('qtime_room_list',{p_channel:channels[channel]});
       if(current!==epoch)return;
       $('room-list').replaceChildren();
-      if(!rows?.length){listMessage('현재 생성된 일반 대전 방이 없습니다.');return}
+      if(!rows?.length){listMessage('현재 생성된 퀴즈방이 없습니다.');return}
       for(const entry of rows){
         const row=document.createElement('div');row.className='room-item';
         const label=document.createElement('strong');label.textContent=(entry.locked?'🔒 ':'')+(entry.title||'퀴즈방');
-        const detail=document.createElement('span');detail.textContent=` ${entry.status==='playing'?'게임 중':'대기 중'} · ${entry.count}/${entry.max_players}명`;
+        const detail=document.createElement('span');detail.textContent=` ${entry.mode==='cpu'?'컴퓨터 대전':'일반 대전'} · ${entry.status==='playing'?'게임 중':'대기 중'} · ${entry.count}/${entry.max_players}명`;
         const button=document.createElement('button');button.type='button';button.textContent='입장';
-        button.disabled=entry.status==='waiting'&&entry.count>=entry.max_players;
+        // CPU 방은 가득 차 있어도 실제 참가자가 들어오면 CPU 한 명을 교체한다.
+        button.disabled=entry.status==='waiting'&&entry.count>=entry.max_players&&
+          (entry.mode!=='cpu'||Number(entry.cpu_count||0)===0);
         button.textContent=entry.status==='playing'?'게임 중':button.disabled?'인원 마감':'입장';
         button.onclick=()=>entry.status==='playing'?alert('게임이 진행 중입니다. 종료 후 입장해 주세요.'):join(entry);
         row.append(label,detail,button);$('room-list').append(row);
@@ -135,23 +137,27 @@
     const title=$('room-title').value.trim()||randomRoomTitles[Math.floor(Math.random()*randomRoomTitles.length)];
     const difficulty={'쉬움':1,'보통':2,'어려움':3,'넌센스':4}[$('room-difficulty').value]||2;
     const maxPlayers=Number.parseInt($('room-capacity').value,10)||10;
+    const mode=$('room-mode').value==='cpu'?'cpu':'normal';
     const password=$('room-password').value.trim();
     if(password&&!/^[0-9]{4,6}$/.test(password)){alert('비밀번호는 숫자 4~6자리입니다.');return}
     try{
-      const id=await rpc('qtime_room_create_v2',{p_channel:channels[channel],p_title:title,p_difficulty:difficulty,p_max_players:maxPlayers,p_password:password||null});
+      const id=await rpc('qtime_room_create_v3',{p_channel:channels[channel],p_title:title,p_difficulty:difficulty,p_max_players:mode==='cpu'?10:maxPlayers,p_password:password||null,p_mode:mode});
       $('room-dialog').close();$('room-title').value='';$('room-password').value='';await refreshRooms();await openRoom(id);
     }catch(error){alert('방 생성 실패: '+errorText(error))}
   }
   async function join(entry){
     try{const password=entry.locked?prompt('방 비밀번호 숫자 4~6자리를 입력하세요.'):null;
       if(entry.locked&&password===null)return;
-      await rpc('qtime_room_join_v2',{p_room_id:entry.id,p_password:password});await openRoom(entry.id)}
+      await rpc('qtime_room_join_v3',{p_room_id:entry.id,p_password:password});await openRoom(entry.id)}
     catch(error){alert('방 입장 실패: '+errorText(error));await refreshRooms()}
   }
   async function kickPlayer(target){
     if(!roomId||!room||room.host_id!==user?.id||target===user.id)return;
     if(!confirm('이 참가자를 강퇴할까요?'))return;
-    try{await rpc('qtime_room_kick',{p_room_id:roomId,p_target_id:target});await refreshRoom()}
+    try{
+      if(String(target).startsWith('cpu:'))await rpc('qtime_cpu_kick',{p_room_id:roomId,p_slot:Number(String(target).slice(4))});
+      else await rpc('qtime_room_kick',{p_room_id:roomId,p_target_id:target});
+      await refreshRoom()}
     catch(error){alert('강퇴 실패: '+errorText(error))}
   }
   async function transferHost(target){
@@ -284,6 +290,12 @@
   $('create').onclick=()=>{$('room-dialog').showModal()};
   $('cancel').onclick=()=>{$('room-dialog').close()};
   $('room-form').addEventListener('submit',create);
+  $('room-mode').addEventListener('change',()=>{
+    const cpu=$('room-mode').value==='cpu';
+    if(cpu)$('room-capacity').value='10명';
+    $('room-capacity').disabled=cpu;
+    $('room-capacity').title=cpu?'컴퓨터 대전은 총 10명으로 진행됩니다.':'';
+  });
   $('public-profile-close').onclick=()=>$('public-profile-dialog').close();
   $('public-profile-done').onclick=()=>$('public-profile-dialog').close();
   $('profile-whisper').onclick=prepareWhisper;

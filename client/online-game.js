@@ -74,9 +74,9 @@
       const level=document.createElement('small');level.textContent=`LV.${member.level||1}`;
       body.append(name,level);
       const badge=document.createElement('span');badge.className='slot-tag';
-      badge.textContent=member.user_id===next.host_id?'👑 방장':member.ready?'✓ 준비 완료':'준비 전';
+      badge.textContent=member.is_cpu?'🤖 CPU · 준비 완료':member.user_id===next.host_id?'👑 방장':member.ready?'✓ 준비 완료':'준비 전';
       card.append(icon,body,badge);
-      if(member.user_id!==id){
+      if(member.user_id!==id&&!member.is_cpu){
         const view=document.createElement('button');view.className='profile-view-btn';view.type='button';
         view.textContent='프로필 보기';view.onclick=()=>send('viewProfile',member.user_id);card.append(view);
         if(isHost&&next.status==='waiting'){
@@ -84,6 +84,8 @@
           const transfer=document.createElement('button');transfer.className='profile-view-btn';transfer.type='button';transfer.textContent='방장 위임';transfer.onclick=()=>send('transferHost',member.user_id);
           const actions=document.createElement('div');actions.className='host-actions';actions.append(kick,transfer);card.append(actions);
         }
+      }else if(member.is_cpu&&isHost&&next.status==='waiting'){
+        const kick=document.createElement('button');kick.className='profile-view-btn';kick.type='button';kick.textContent='CPU 강퇴';kick.onclick=()=>send('kickPlayer',member.user_id);card.append(kick);
       }
       slots.append(card);
     });
@@ -94,11 +96,13 @@
     }
     document.querySelector('.section-title strong').textContent=`${members.length} / ${next.max_players}`;
     const pills=document.querySelectorAll('.room-head .pill');
+    if(pills[0])pills[0].textContent=next.mode==='cpu'?'컴퓨터 대전':'일반 대전';
+    if(pills[1])pills[1].textContent=({1:'쉬움',2:'보통',3:'어려움',4:'넌센스'})[next.difficulty]||'보통';
     if(pills[2])pills[2].textContent=`${members.length} / ${next.max_players}명`;
     const mine=members.find(m=>m.user_id===id);
     $('ready').hidden=isHost;$('start').hidden=!isHost;
     $('ready').textContent=mine?.ready?'준비 취소':'준비하기';
-    $('start').disabled=!isHost||next.status!=='waiting'||!members.every(m=>m.user_id===id||m.ready);
+    $('start').disabled=!isHost||next.status!=='waiting'||!members.every(m=>m.is_cpu||m.user_id===id||m.ready);
     $('ready-hint').textContent=next.host_timeout?.active?
       (next.host_timeout.warning?`방장 시작 제한 ${next.host_timeout.seconds_left}초 · 시간 초과 시 방장 변경`:`모두 준비 완료 · 방장이 ${next.host_timeout.seconds_left}초 안에 시작해야 합니다.`):
       next.status==='playing'?'게임이 진행 중입니다.':
@@ -109,12 +113,6 @@
       p.append(b,document.createTextNode(entry.message));chat.append(p);
     }
     chat.scrollTop=nearBottom?chat.scrollHeight:previousScroll;
-    const gameLog=$('game-chat-log');
-    gameLog.replaceChildren();
-    for(const entry of (next.messages||[]).slice(-1)){
-      const line=document.createElement('p'),name=document.createElement('b');name.textContent=entry.nickname+': ';
-      line.append(name,document.createTextNode(entry.message));gameLog.append(line);
-    }
     const newest=(next.messages||[]).at(-1);
     if(newest&&Number(newest.id)>seenMessage){
       if(seenMessage&&phase!=='waiting')showBubble(newest);
@@ -234,7 +232,7 @@
         });
         $('explanation').textContent=`정답 ${optionOrder.indexOf(next.correct_index)+1}번 · ${next.explanation||''}`;
         $('explanation').hidden=false;
-        $('feedback').textContent=next.my_randomized?`미선택 · ${optionOrder.indexOf(next.my_choice)+1}번 자동 선택 · ${next.my_points||0}점`:next.my_points>0?`정답! +${next.my_points}점`:'이번 문제는 0점';
+        $('feedback').textContent='';
         drawPlayers();scoreEffect(Number(next.my_points||0),Number(next.my_streak||0));
       }
     }else drawPlayers();
