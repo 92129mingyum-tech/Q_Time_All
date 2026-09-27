@@ -12,6 +12,9 @@
   const errorText = error => String(error?.message || error || '알 수 없는 오류');
   const frame = () => $('feature-frame')?.contentWindow;
   function status(value){$('shop-status').textContent=value;}
+  const notice=(message,options={})=>window.qtimeDialog.alert(message,options);
+  const ask=(message,options={})=>window.qtimeDialog.confirm(message,options);
+  const input=(message,options={})=>window.qtimeDialog.prompt(message,options);
   async function rpc(name,args){const {data,error}=await client.rpc(name,args);if(error)throw error;return data}
   function listMessage(value){$('room-list').replaceChildren();const p=document.createElement('p');p.className='empty';p.textContent=value;$('room-list').append(p)}
   async function refreshRooms(){
@@ -31,7 +34,7 @@
         button.disabled=entry.status==='waiting'&&entry.count>=entry.max_players&&
           (!String(entry.mode).includes('cpu')||Number(entry.cpu_count||0)===0);
         button.textContent=entry.status==='playing'?'게임 중':button.disabled?'인원 마감':'입장';
-        button.onclick=()=>entry.status==='playing'?alert('게임이 진행 중입니다. 종료 후 입장해 주세요.'):join(entry);
+        button.onclick=()=>entry.status==='playing'?notice('게임이 진행 중입니다. 종료 후 입장해 주세요.',{title:'입장 안내'}):join(entry);
         row.append(label,detail,button);$('room-list').append(row);
       }
     }catch(error){if(current===epoch)listMessage('방 목록 연결 실패: '+errorText(error))}
@@ -140,32 +143,35 @@
     const maxPlayers=Number.parseInt($('room-capacity').value,10)||10;
     const mode=['normal','cpu','team'].includes($('room-mode').value)?$('room-mode').value:'normal';
     const password=$('room-password').value.trim();
-    if(password&&!/^[0-9]{4,6}$/.test(password)){alert('비밀번호는 숫자 4~6자리입니다.');return}
+    if(password&&!/^[0-9]{4,6}$/.test(password)){notice('비밀번호는 숫자 4~6자리입니다.',{title:'방 만들기',type:'warning'});return}
     try{
-      const id=await rpc('qtime_room_create_v5',{p_channel:channels[channel],p_title:title,p_difficulty:difficulty,p_max_players:mode==='team'?8:mode==='cpu'?10:maxPlayers,p_password:password||null,p_mode:mode});
+      const id=await rpc('qtime_room_create_v5',{p_channel:channels[channel],p_title:title,p_difficulty:difficulty,p_max_players:mode==='team'?10:mode==='cpu'?10:maxPlayers,p_password:password||null,p_mode:mode});
       $('room-dialog').close();$('room-title').value='';$('room-password').value='';await refreshRooms();await openRoom(id);
-    }catch(error){alert('방 생성 실패: '+errorText(error))}
+    }catch(error){notice('방 생성 실패: '+errorText(error),{title:'방 만들기 오류',type:'error'})}
   }
   async function join(entry){
-    try{const password=entry.locked?prompt('방 비밀번호 숫자 4~6자리를 입력하세요.'):null;
+    try{const password=entry.locked?await input('방 비밀번호 숫자 4~6자리를 입력하세요.',{title:'비밀번호 방 입장',placeholder:'숫자 4~6자리',inputType:'password',inputMode:'numeric',maxLength:6,okText:'입장'}):null;
       if(entry.locked&&password===null)return;
+      if(entry.locked&&!/^[0-9]{4,6}$/.test(password)){await notice('비밀번호는 숫자 4~6자리로 입력해주세요.',{title:'입장 불가',type:'warning'});return}
       await rpc('qtime_room_join_v3',{p_room_id:entry.id,p_password:password});await openRoom(entry.id)}
-    catch(error){alert('방 입장 실패: '+errorText(error));await refreshRooms()}
+    catch(error){notice('방 입장 실패: '+errorText(error),{title:'입장 오류',type:'error'});await refreshRooms()}
   }
   async function kickPlayer(target){
     if(!roomId||!room||room.host_id!==user?.id||target===user.id)return;
-    if(!confirm('이 참가자를 강퇴할까요?'))return;
+    const member=room.members?.find(item=>String(item.user_id)===String(target));
+    if(!await ask(`${member?.nickname||'이 참가자'}님을 방에서 강퇴할까요?`,{title:'참가자 강퇴',type:'danger',okText:'강퇴'}))return;
     try{
       if(String(target).startsWith('cpu:'))await rpc('qtime_cpu_kick',{p_room_id:roomId,p_slot:Number(String(target).slice(4))});
       else await rpc('qtime_room_kick',{p_room_id:roomId,p_target_id:target});
       await refreshRoom()}
-    catch(error){alert('강퇴 실패: '+errorText(error))}
+    catch(error){notice('강퇴 실패: '+errorText(error),{title:'강퇴 오류',type:'error'})}
   }
   async function transferHost(target){
     if(!roomId||!room||room.host_id!==user?.id||target===user.id)return;
-    if(!confirm('이 참가자에게 방장을 위임할까요?'))return;
+    const member=room.members?.find(item=>String(item.user_id)===String(target));
+    if(!await ask(`${member?.nickname||'이 참가자'}님에게 방장을 위임할까요?`,{title:'방장 위임',type:'warning',okText:'위임'}))return;
     try{await rpc('qtime_room_transfer_host',{p_room_id:roomId,p_target_id:target});await refreshRoom()}
-    catch(error){alert('방장 위임 실패: '+errorText(error))}
+    catch(error){notice('방장 위임 실패: '+errorText(error),{title:'위임 오류',type:'error'})}
   }
   async function setTeam(team){if(!roomId)return;try{await rpc('qtime_team_select',{p_room_id:roomId,p_team:team});await refreshRoom()}catch(error){alert('팀 선택 실패: '+errorText(error))}}
   async function addTeamCpu(team){if(!roomId)return;try{await rpc('qtime_team_cpu_add',{p_room_id:roomId,p_team:team});await refreshRoom()}catch(error){alert('CPU 추가 실패: '+errorText(error))}}
@@ -195,20 +201,41 @@
     }
     catch(error){alert('방 채팅 실패: '+errorText(error))}
   }
+  function ensureInviteDialog(){
+    let dialog=$('invite-dialog');if(dialog)return dialog;
+    dialog=document.createElement('dialog');dialog.id='invite-dialog';dialog.className='invite-dialog';
+    dialog.innerHTML=`<div class="invite-head"><div><small>Q-TIME INVITE</small><h2>현재 접속자 초대</h2><p>같이 플레이할 이용자를 선택하세요.</p></div><button type="button" class="invite-close" aria-label="닫기">✕</button></div><input id="invite-search" type="search" placeholder="닉네임 검색" aria-label="초대할 이용자 검색"><div id="invite-user-list" class="invite-user-list"></div>`;
+    document.body.append(dialog);dialog.querySelector('.invite-close').onclick=()=>dialog.close();
+    dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close()});
+    dialog.querySelector('#invite-search').addEventListener('input',renderInviteUsers);
+    return dialog;
+  }
+  function renderInviteUsers(){
+    const dialog=ensureInviteDialog(),list=dialog.querySelector('#invite-user-list');
+    const query=dialog.querySelector('#invite-search').value.trim().toLowerCase();
+    const current=new Set((room?.members||[]).map(item=>String(item.user_id)));
+    const people=channelUsers.filter(item=>item.user_id!==user?.id&&!current.has(String(item.user_id))&&(!query||String(item.nickname||'').toLowerCase().includes(query)));
+    list.replaceChildren();
+    if(!people.length){const empty=document.createElement('p');empty.className='invite-empty';empty.textContent=query?'검색 결과가 없습니다.':'현재 초대 가능한 접속자가 없습니다.';list.append(empty);return}
+    for(const person of people){
+      const row=document.createElement('article');row.className='invite-user';
+      const icon=document.createElement('span');icon.className='invite-avatar';window.qtimeProfileIcon?.set(icon,person.profile_icon);
+      const info=document.createElement('div');info.className='invite-info';const name=document.createElement('strong');name.textContent=person.nickname||'도전자';const state=document.createElement('span');state.textContent=`LV.${person.level||1} · 접속 중`;info.append(name,state);
+      const button=document.createElement('button');button.type='button';button.textContent='초대';button.onclick=async()=>{button.disabled=true;button.textContent='전송 중';try{await rpc('qtime_invite_send',{p_room_id:roomId,p_recipient:person.user_id});button.textContent='초대 완료';row.classList.add('invited')}catch(error){button.disabled=false;button.textContent='다시 시도';await notice('초대 실패: '+errorText(error),{title:'초대 오류',type:'error'})}};
+      row.append(icon,info,button);list.append(row);
+    }
+  }
+  function showInviteDialog(){const dialog=ensureInviteDialog();dialog.querySelector('#invite-search').value='';renderInviteUsers();dialog.showModal();dialog.querySelector('#invite-search').focus()}
   async function invitePeople(){
     if(!roomId)return;
     try{
-      const {data,error}=await client.rpc('qtime_friend_list',{});if(error)throw error;
-      const friends=(data||[]).filter(entry=>entry.status==='accepted'&&entry.id!==user.id);
-      if(!friends.length){alert('초대할 수 있는 친구가 없습니다.');return}
-      const name=prompt('초대할 친구의 닉네임을 입력하세요.\n'+friends.map(entry=>entry.nickname).join(', '));if(!name)return;
-      const target=friends.find(entry=>entry.nickname===name.trim());if(!target){alert('일치하는 친구가 없습니다.');return}
-      await rpc('qtime_invite_send',{p_room_id:roomId,p_recipient:target.user_id});alert('방 초대를 보냈습니다.');
-    }catch(error){alert('초대 실패: '+errorText(error))}
+      await refreshChannel();
+      showInviteDialog();
+    }catch(error){notice('접속자 목록을 불러오지 못했습니다: '+errorText(error),{title:'초대 오류',type:'error'})}
   }
   async function refreshInvites(){
     if(!client||!user||roomId||localStorage.getItem('qtime-invites')==='off')return;
-    try{const invites=await rpc('qtime_invite_inbox',{});const invite=(invites||[]).find(row=>Number(row.id)>lastInvite);if(!invite)return;lastInvite=Number(invite.id);const accept=confirm(`${invite.inviter_name}님이 "${invite.room_title}" 방으로 초대했습니다.\n${invite.mode_label} · ${invite.count}/${invite.max_players}명${invite.locked?' · 비밀번호 방':''}\n입장할까요?`);const id=await rpc('qtime_invite_respond',{p_invite_id:invite.id,p_accept:accept});if(accept&&id)await openRoom(id)}catch(error){status('초대 확인 오류: '+errorText(error))}
+    try{const invites=await rpc('qtime_invite_inbox',{});const invite=(invites||[]).find(row=>Number(row.id)>lastInvite);if(!invite)return;lastInvite=Number(invite.id);const accept=Boolean(await ask(`${invite.inviter_name}님이 "${invite.room_title}" 방으로 초대했습니다.\n${invite.mode_label} · ${invite.count}/${invite.max_players}명${invite.locked?' · 비밀번호 방':''}`,{title:'게임방 초대',okText:'입장'}));const id=await rpc('qtime_invite_respond',{p_invite_id:invite.id,p_accept:accept});if(accept&&id)await openRoom(id)}catch(error){status('초대 확인 오류: '+errorText(error))}
   }
   function whisperRequest(input,people,forcedId){
     const match=String(input).match(/^\/(?:w|귓속말)\s+(\S+)\s+([\s\S]+)$/i);
@@ -242,7 +269,7 @@
   function makeShout(entry){
     const notice=document.createElement('div');notice.className='qtime-shout-notice';
     notice.style.setProperty('--shout-color',entry.color);
-    const label=document.createElement('small');label.textContent=`📣 확성기 · ${entry.nickname||'도전자'}`;
+    const label=document.createElement('small');label.textContent=`📣 ${entry.nickname||'도전자'}`;
     const message=document.createElement('span');message.textContent=entry.message;
     notice.append(label,message);
     const overlay=$('feature-overlay');
@@ -313,9 +340,9 @@
   $('room-form').addEventListener('submit',create);
   $('room-mode').addEventListener('change',()=>{
     const mode=$('room-mode').value,cpu=mode==='cpu',team=mode==='team';
-    if(cpu)$('room-capacity').value='10명';if(team)$('room-capacity').value='8명';
+    if(cpu)$('room-capacity').value='10명';if(team)$('room-capacity').value='10명';
     $('room-capacity').disabled=cpu||team;
-    $('room-capacity').title=cpu?'컴퓨터 대전은 총 10명입니다.':team?'팀전은 RED 4명, BLUE 4명입니다.':'';
+    $('room-capacity').title=cpu?'컴퓨터 대전은 총 10명입니다.':team?'팀전은 RED 5명, BLUE 5명입니다.':'';
   });
   $('public-profile-close').onclick=()=>$('public-profile-dialog').close();
   $('public-profile-done').onclick=()=>$('public-profile-dialog').close();

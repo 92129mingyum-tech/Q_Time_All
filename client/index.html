@@ -623,7 +623,7 @@
 <span class="notice-text">Q-TIME에 오신 것을 환영합니다!</span>
 </span>
 </div>
-    <div class="version">Client v0.1.20 <span id="status">업데이트 확인 중…</span>
+    <div class="version">Client v0.1.21 <span id="status">업데이트 확인 중…</span>
 </div>
   </footer>
 
@@ -688,7 +688,7 @@
 <textarea id="profile-note" maxlength="140" rows="3" placeholder="나를 소개해 주세요">
 </textarea>
 <button type="button" id="save-profile-note">자기소개 저장</button>
-<h3 class="profile-grid-title">프로필 이모티콘</h3>
+<h3 class="profile-grid-title">프로필 선택 <small>십이지신 무료 · 구매한 프로필 사용 가능</small></h3>
 <div class="profile-icon-grid" id="profile-icon-grid" role="group" aria-label="프로필 이모티콘 목록">
 </div>
 <p class="profile-hint">게임 속 전신 캐릭터와 별개인 프로필 이미지입니다. 유료 항목은 구매·이용권 기능을 연결한 뒤 사용할 수 있습니다.</p>
@@ -711,7 +711,7 @@
 <button type="button" id="close-shop">닫기</button>
 </div>
 <div style="padding:20px;display:grid;gap:14px;min-width:min(380px,85vw)">
-<p>확성기 사용권 · 전체 이용자에게 메시지 1회</p>
+<p>확성기 · 전체 이용자에게 메시지 1회</p>
 <p>가격 200 P · 보유 <strong id="shout-balance">0개</strong>
 </p>
 <button type="button" class="btn-orange" id="buy-shout">확성기 1개 구매</button>
@@ -719,6 +719,7 @@
 </p>
 </div>
 </dialog>
+  <script src="./qtime-dialogs.js"></script>
   <script>
     const byId = id => document.getElementById(id);
     // Visual lobby handlers are installed by visual-lobby.js.
@@ -733,16 +734,17 @@
     const entries=[...new Set([...freeProfiles,...premiumProfiles,...zodiacProfiles])].map(icon=>({id:icon,free:freeProfiles.includes(icon)}));
     entries.push(...Object.keys(customProfileImages).map(id=>({id:'img:'+id,free:false})));
     const grid=byId('profile-icon-grid');
-    for(const entry of entries){const button=document.createElement('button');button.type='button';button.className='profile-icon';button.dataset.icon=entry.id;button.setAttribute('aria-pressed',String(entry.id===selectedProfile));button.setAttribute('aria-label',(entry.id.startsWith('img:')?profileNames[entry.id.slice(4)]:entry.id)+(entry.free?' 무료':' 유료'));let art;
+    for(const entry of entries){const button=document.createElement('button');button.type='button';button.className='profile-icon';button.dataset.icon=entry.id;button.dataset.free=String(entry.free);button.dataset.owned=String(entry.free);button.setAttribute('aria-pressed',String(entry.id===selectedProfile));button.setAttribute('aria-label',(entry.id.startsWith('img:')?profileNames[entry.id.slice(4)]:entry.id)+(entry.free?' 무료':' 유료'));let art;
       if(entry.id.startsWith('img:')){art=document.createElement('img');art.src=customProfileImages[entry.id.slice(4)];art.alt=''}else{art=document.createElement('span');art.textContent=entry.id}button.append(art);const tag=document.createElement('small');tag.textContent=entry.free?'무료':'상점 상품';button.append(tag);
       button.onclick=async()=>{
         if(!window.qtimeSaveProfileIcon){alert('로그인 후 변경할 수 있습니다.');return}
+        if(!entry.free&&button.dataset.owned!=='true'){alert('상점에서 먼저 구입한 프로필입니다.');return}
         try{await window.qtimeSaveProfileIcon(entry.id)}catch(error){alert('프로필 저장 실패: '+error.message);return}
         selectedProfile=entry.id;
         window.qtimeProfileIcon?.set(byId('profile-selected'),entry.id);
         window.qtimeProfileIcon?.set(document.querySelector('.header-avatar'),entry.id);
         byId('profile-character-name').textContent=entry.id+' 프로필';
-        grid.querySelectorAll('button').forEach(el=>el.setAttribute('aria-pressed',String(el===button)));
+        grid.querySelectorAll('button').forEach(el=>{el.setAttribute('aria-pressed',String(el===button));const label=el.querySelector('small');if(label)label.textContent=el===button?'사용 중':el.dataset.free==='true'?'무료':el.dataset.owned==='true'?'사용 가능':'구입 필요'});
       };grid.append(button)}
     if(window.qtime?.onUpdateStatus)window.qtime.onUpdateStatus(message=>{byId('status').textContent=message});
 
@@ -799,7 +801,8 @@ login.onsubmit=async event=>{
  try{
   const id=document.getElementById('login-id').value.trim();
   const password=document.getElementById('login-pw').value;
-  const remember=$('remember-id').checked,rememberPw=$('remember-pw').checked;
+  const remember=document.getElementById('remember-id').checked;
+  const rememberPw=document.getElementById('remember-pw').checked;
   const {data,error}=await client.auth.signInWithPassword({email:emailForId(id),password});
   if(error||!data.user)throw Error('아이디 또는 비밀번호를 확인해주세요.');
   await enter(data.user);
@@ -832,10 +835,10 @@ logout.onclick=async()=>{
  finally{setBusy(false)}
 };
 const remembered=localStorage.getItem('qtime-remembered-id');
-if(remembered){$('login-id').value=remembered;$('remember-id').checked=true}
+if(remembered){document.getElementById('login-id').value=remembered;document.getElementById('remember-id').checked=true}
 const rememberedPw=localStorage.getItem('qtime-remembered-pw');
-if(rememberedPw){$('login-pw').value=rememberedPw;$('remember-pw').checked=true}
-$('remember-pw').addEventListener('change',event=>{if(event.target.checked&&!confirm('비밀번호는 이 PC에만 저장됩니다. 공용 PC에서는 사용하지 마세요.'))event.target.checked=false});
+if(rememberedPw){document.getElementById('login-pw').value=rememberedPw;document.getElementById('remember-pw').checked=true}
+document.getElementById('remember-pw').addEventListener('change',async event=>{if(event.target.checked&&!await window.qtimeDialog.confirm('비밀번호는 이 PC에만 저장됩니다. 공용 PC에서는 사용하지 마세요.',{title:'비밀번호 기억하기',type:'warning',okText:'기억하기'}))event.target.checked=false});
 })();
 </script>
 

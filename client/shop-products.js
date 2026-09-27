@@ -6,7 +6,7 @@
  */
 window.QTIME_SHOP_PRODUCTS = {
   items: [
-    { icon: '📣', name: '확성기 사용권', price: 200, description: '전체 화면에 메시지 1회 표시. 글씨 색상을 고를 수 있습니다.' },
+    { icon: '📣', name: '확성기', price: 200, description: '전체 화면에 메시지 1회 표시. 글씨 색상을 고를 수 있습니다.' },
     { icon: '💡', name: '힌트 사용권', price: 300, description: '문제를 풀 때 보기 하나를 제외하는 사용권입니다.' },
     { icon: '🎟️', name: '경험치 부스터', price: 500, description: '게임 보상 경험치를 추가로 받는 사용권입니다.' },
     { icon: '🧩', name: '문제 패스권', price: 350, description: '어려운 문제를 한 번 건너뛸 수 있습니다.' },
