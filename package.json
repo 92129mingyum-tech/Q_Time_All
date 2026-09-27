@@ -1,7 +1,7 @@
 {
   "name": "q-time-client",
   "productName": "Q-TIME",
-  "version": "0.1.16",
+  "version": "0.1.17-rc.2",
   "description": "Q-TIME desktop client",
   "main": "client/main.js",
   "private": true,
@@ -35,7 +35,8 @@
       }
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "client/assets/icon/qtime-b2.ico"
     },
     "nsis": {
       "oneClick": false,

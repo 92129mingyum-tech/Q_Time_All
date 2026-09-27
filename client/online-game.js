@@ -5,6 +5,17 @@
   let seenMessage=0, activeBubble=null, bubbleUntil=0, resultTimer=null;
   let seenPrivate=0;
   let clockOffset=0, lastRoundKey='', lastRevealKey='', lastResultKey='';
+  let optionOrder=[0,1,2,3];
+  function shuffledOptions(key,count){
+    let seed=2166136261;
+    for(const char of key)seed=Math.imul(seed^char.charCodeAt(0),16777619)>>>0;
+    const order=Array.from({length:count},(_,i)=>i);
+    for(let i=order.length-1;i>0;i--){
+      seed^=seed<<13;seed^=seed>>>17;seed^=seed<<5;
+      const j=(seed>>>0)%(i+1);[order[i],order[j]]=[order[j],order[i]];
+    }
+    return order;
+  }
   const send=(action,data)=>parent.qtimeRoomServer?.[action]?.(data);
   function fit(){
     const scale=Math.min(innerWidth/1360,innerHeight/800);
@@ -88,14 +99,22 @@
     $('ready').hidden=isHost;$('start').hidden=!isHost;
     $('ready').textContent=mine?.ready?'준비 취소':'준비하기';
     $('start').disabled=!isHost||next.status!=='waiting'||!members.every(m=>m.user_id===id||m.ready);
-    $('ready-hint').textContent=next.status==='playing'?'게임이 진행 중입니다.':
+    $('ready-hint').textContent=next.host_timeout?.active?
+      (next.host_timeout.warning?`방장 시작 제한 ${next.host_timeout.seconds_left}초 · 시간 초과 시 방장 변경`:`모두 준비 완료 · 방장이 ${next.host_timeout.seconds_left}초 안에 시작해야 합니다.`):
+      next.status==='playing'?'게임이 진행 중입니다.':
       isHost?($('start').disabled?'다른 참가자의 준비를 기다립니다.':'게임을 시작할 수 있어요.'):'준비를 눌러 방장에게 알려주세요.';
-    const chat=$('chat');chat.replaceChildren();
+    const chat=$('chat');const nearBottom=chat.scrollHeight-chat.scrollTop-chat.clientHeight<40;const previousScroll=chat.scrollTop;chat.replaceChildren();
     for(const entry of next.messages||[]){
       const p=document.createElement('p'),b=document.createElement('b');b.textContent=entry.nickname+' ';
       p.append(b,document.createTextNode(entry.message));chat.append(p);
     }
-    chat.scrollTop=chat.scrollHeight;
+    chat.scrollTop=nearBottom?chat.scrollHeight:previousScroll;
+    const gameLog=$('game-chat-log');
+    gameLog.replaceChildren();
+    for(const entry of (next.messages||[]).slice(-1)){
+      const line=document.createElement('p'),name=document.createElement('b');name.textContent=entry.nickname+': ';
+      line.append(name,document.createTextNode(entry.message));gameLog.append(line);
+    }
     const newest=(next.messages||[]).at(-1);
     if(newest&&Number(newest.id)>seenMessage){
       if(seenMessage&&phase!=='waiting')showBubble(newest);
@@ -121,13 +140,14 @@
     $('timer').textContent=Math.ceil(left/1000)+'초';
     $('timer').style.color=left<=3000?'#ff8c93':'#ffe184';
     $('time-bar').style.width=(left/70)+'%';
+    $('time-bar').style.background=left<=3000?'#f34e56':'#35a8bc';
   }
   function showRoom(){
     phase='waiting';match=null;lastRoundKey='';lastRevealKey='';lastResultKey='';
     $('result').classList.remove('show');$('countdown').hidden=true;screen('room-screen');
   }
   function scoreEffect(points,combo){
-    const card=$('arena').querySelector('.mine');if(!card||!points)return;
+    const card=$('arena').querySelector('.mine');if(!card||!points)return;window.qtimeSound?.play('score');
     card.classList.remove('score-bounce');void card.offsetWidth;card.classList.add('score-bounce');
     const pop=document.createElement('div');pop.className='score-pop';pop.textContent=`+${points}점`;card.append(pop);
     if(combo>=2){
@@ -144,23 +164,26 @@
     $('feedback').textContent='';
     $('explanation').hidden=true;
     $('answers').replaceChildren();
-    (next.options||[]).forEach((option,index)=>{
+    optionOrder=shuffledOptions(`${next.started_at}:${next.round}`,(next.options||[]).length);
+    optionOrder.forEach((original,index)=>{
       const button=document.createElement('button');button.type='button';
-      button.textContent=`${'①②③④'[index]} ${option}`;
+      button.textContent=`${'①②③④'[index]} ${next.options[original]}`;
       button.onclick=()=>choose(index);$('answers').append(button);
     });
     screen('game-screen');drawPlayers(true);
   }
   function selected(next){
-    [...$('answers').children].forEach((button,i)=>button.classList.toggle('selected',i===next.my_choice));
-    const mark=$('my-answer-mark');if(mark)mark.textContent=next.my_choice==null?'':String(next.my_choice+1);
+    [...$('answers').children].forEach((button,i)=>button.classList.toggle('selected',optionOrder[i]===next.my_choice));
+    const mark=$('my-answer-mark');if(mark)mark.textContent=next.my_choice==null?'':String(optionOrder.indexOf(next.my_choice)+1);
   }
   async function choose(index){
     if(phase!=='question'||!match||!$('game-screen').classList.contains('active'))return;
     const left=7000-(now()-stamp(match.started_at)-(round-1)*10000);
     if(left<=0)return;
-    const old=match.my_choice;match.my_choice=index;selected(match);
-    try{await send('answer',{round,choice:index})}
+    const original=optionOrder[index];
+    if(original==null)return;
+    const old=match.my_choice;match.my_choice=original;selected(match);window.qtimeSound?.play('answer');
+    try{await send('answer',{round,choice:original})}
     catch(error){match.my_choice=old;selected(match);$('feedback').textContent='답변 전송 실패: '+String(error.message||error)}
   }
   function showResult(next){
@@ -206,12 +229,12 @@
         lastRevealKey=revealKey;
         [...$('answers').children].forEach((button,i)=>{
           button.disabled=true;
-          button.classList.toggle('correct',i===next.correct_index);
-          button.classList.toggle('wrong',i===next.my_choice&&i!==next.correct_index);
+          button.classList.toggle('correct',optionOrder[i]===next.correct_index);
+          button.classList.toggle('wrong',optionOrder[i]===next.my_choice&&optionOrder[i]!==next.correct_index);
         });
-        $('explanation').textContent=`정답 ${next.correct_index+1}번 · ${next.explanation||''}`;
+        $('explanation').textContent=`정답 ${optionOrder.indexOf(next.correct_index)+1}번 · ${next.explanation||''}`;
         $('explanation').hidden=false;
-        $('feedback').textContent=next.my_randomized?`미선택 · ${Number(next.my_choice)+1}번 자동 선택 · ${next.my_points||0}점`:next.my_points>0?`정답! +${next.my_points}점`:'이번 문제는 0점';
+        $('feedback').textContent=next.my_randomized?`미선택 · ${optionOrder.indexOf(next.my_choice)+1}번 자동 선택 · ${next.my_points||0}점`:next.my_points>0?`정답! +${next.my_points}점`:'이번 문제는 0점';
         drawPlayers();scoreEffect(Number(next.my_points||0),Number(next.my_streak||0));
       }
     }else drawPlayers();
@@ -222,14 +245,14 @@
   }
   function privateUpdate(messages,myId){
     if(!room)return;
-    const chat=$('chat');
+    const chat=$('chat');const nearBottom=chat.scrollHeight-chat.scrollTop-chat.clientHeight<40;const previousScroll=chat.scrollTop;
     for(const item of [...(messages||[])].reverse()){
       const row=document.createElement('p');row.className='whisper';
       const name=document.createElement('b');
       name.textContent=item.sender_id===myId?`🔒 나 → ${item.recipient_name}: `:`🔒 ${item.sender_name} → 나: `;
       row.append(name,document.createTextNode(item.message));chat.append(row);
     }
-    chat.scrollTop=chat.scrollHeight;
+    chat.scrollTop=nearBottom?chat.scrollHeight:previousScroll;
     const latest=(messages||[])[0];
     if(latest&&Number(latest.id)>seenPrivate){
       if(seenPrivate&&phase!=='waiting')showBubble({...latest,sender_id:latest.sender_id});
@@ -247,7 +270,9 @@
   $('ready').onclick=()=>send('setReady',!room?.members?.find(m=>m.user_id===meId)?.ready);
   $('start').onclick=()=>send('start');
   $('leave').onclick=()=>send('closeRoom');
-  $('back-room').onclick=()=>send('closeRoom');
+  $('back-room').onclick=()=>{
+    if(confirm('게임 중 방을 나가시겠습니까? 이 경기의 경험치와 게임 재화는 지급되지 않습니다.'))send('closeRoom');
+  };
   $('result-back').onclick=showRoom;
   $('result-exit').onclick=()=>send('closeRoom');
   $('chat-form').onsubmit=event=>{
@@ -261,7 +286,17 @@
   window.qtimeChatCommands?.attach($('chat-input'));
   window.qtimeChatCommands?.attach($('game-chat-input'));
   addEventListener('keydown',event=>{
-    if(!/^[1-4]$/.test(event.key)||event.target.closest('input,textarea,[contenteditable]'))return;
+    if(event.target.closest('input,textarea,[contenteditable]'))return;
+    if(event.ctrlKey&&!event.altKey&&!event.shiftKey){
+      const key=event.key.toLowerCase(),isHost=room?.host_id===meId;
+      if(key==='r'&&!isHost&&room?.status==='waiting'){
+        event.preventDefault();send('setReady',!room?.members?.find(m=>m.user_id===meId)?.ready);return;
+      }
+      if(key==='s'&&isHost&&room?.status==='waiting'){
+        event.preventDefault();if(!$('start').disabled)send('start');return;
+      }
+    }
+    if(!/^[1-4]$/.test(event.key)||event.ctrlKey||event.altKey||event.metaKey)return;
     if(phase==='question'){event.preventDefault();choose(Number(event.key)-1)}
   });
   addEventListener('resize',fit);fit();setInterval(updateClock,100);

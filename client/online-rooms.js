@@ -24,7 +24,7 @@
       if(!rows?.length){listMessage('현재 생성된 일반 대전 방이 없습니다.');return}
       for(const entry of rows){
         const row=document.createElement('div');row.className='room-item';
-        const label=document.createElement('strong');label.textContent=entry.title||'퀴즈방';
+        const label=document.createElement('strong');label.textContent=(entry.locked?'🔒 ':'')+(entry.title||'퀴즈방');
         const detail=document.createElement('span');detail.textContent=` ${entry.status==='playing'?'게임 중':'대기 중'} · ${entry.count}/${entry.max_players}명`;
         const button=document.createElement('button');button.type='button';button.textContent='입장';
         button.disabled=entry.status==='waiting'&&entry.count>=entry.max_players;
@@ -50,7 +50,7 @@
         const count=tab.querySelector('.channel-count');
         if(count)count.textContent=`(${Number(counts[channels[tab.dataset.channel]]||0)}/30)`;
       });
-      const log=$('chat-log');log.replaceChildren();
+      const log=$('chat-log');const nearBottom=log.scrollHeight-log.scrollTop-log.clientHeight<40;const previousScroll=log.scrollTop;log.replaceChildren();
       if(!channelBaseline.has(selected))channelBaseline.set(selected,Math.max(0,...(state.messages||[]).map(m=>Number(m.id)||0)));
       const feed=[...(state.messages||[]).filter(m=>Number(m.id)>channelBaseline.get(selected)).map(m=>({...m,private:false})),
         ...(whispers||[]).filter(m=>Number(m.id)>whisperBaseline.get('lobby')).map(m=>({...m,private:true}))];
@@ -64,7 +64,7 @@
         line.append(name,document.createTextNode(entry.message));log.append(line);
       }
       if(!feed.length)log.textContent='이 채널의 첫 메시지를 보내보세요.';
-      log.scrollTop=log.scrollHeight;
+      log.scrollTop=nearBottom?log.scrollHeight:previousScroll;
       const users=$('online-user-list');users.replaceChildren();
       for(const entry of channelUsers){
         const card=document.createElement('div');card.className='user-card';
@@ -99,11 +99,17 @@
     if(!roomId||roomRefreshing)return;
     roomRefreshing=true;const selected=roomId;
     try{
+      const timeout=await rpc('qtime_host_timeout',{p_room_id:selected});
+      if(roomId!==selected)return;
       const state=await rpc('qtime_room_state',{p_room_id:selected});
+      if(state)state.host_timeout=timeout;
       if(roomId!==selected)return;
       displayRoom(state);
       const currentMatch=await rpc('qtime_match_state_v2',{p_room_id:selected});
-      if(roomId===selected)displayMatch(currentMatch);
+      if(roomId===selected){
+        await rpc('qtime_record_win',{p_room_id:selected});
+        displayMatch(currentMatch);
+      }
       const privateMessages=await rpc('qtime_whisper_inbox',{p_room_id:selected});
       if(roomId===selected){
         if(!whisperBaseline.has(selected))whisperBaseline.set(selected,Math.max(0,...(privateMessages||[]).map(m=>Number(m.id)||0)));
@@ -129,13 +135,17 @@
     const title=$('room-title').value.trim()||randomRoomTitles[Math.floor(Math.random()*randomRoomTitles.length)];
     const difficulty={'쉬움':1,'보통':2,'어려움':3,'넌센스':4}[$('room-difficulty').value]||2;
     const maxPlayers=Number.parseInt($('room-capacity').value,10)||10;
+    const password=$('room-password').value.trim();
+    if(password&&!/^[0-9]{4,6}$/.test(password)){alert('비밀번호는 숫자 4~6자리입니다.');return}
     try{
-      const id=await rpc('qtime_room_create',{p_channel:channels[channel],p_title:title,p_difficulty:difficulty,p_max_players:maxPlayers});
-      $('room-dialog').close();$('room-title').value='';await refreshRooms();await openRoom(id);
+      const id=await rpc('qtime_room_create_v2',{p_channel:channels[channel],p_title:title,p_difficulty:difficulty,p_max_players:maxPlayers,p_password:password||null});
+      $('room-dialog').close();$('room-title').value='';$('room-password').value='';await refreshRooms();await openRoom(id);
     }catch(error){alert('방 생성 실패: '+errorText(error))}
   }
   async function join(entry){
-    try{await rpc('qtime_room_join',{p_room_id:entry.id});await openRoom(entry.id)}
+    try{const password=entry.locked?prompt('방 비밀번호 숫자 4~6자리를 입력하세요.'):null;
+      if(entry.locked&&password===null)return;
+      await rpc('qtime_room_join_v2',{p_room_id:entry.id,p_password:password});await openRoom(entry.id)}
     catch(error){alert('방 입장 실패: '+errorText(error));await refreshRooms()}
   }
   async function kickPlayer(target){
@@ -186,8 +196,11 @@
       $('public-name').textContent=info.nickname||'도전자';
       $('public-level').textContent=`LV.${info.level||1}`;
       $('public-exp').textContent=`EXP ${info.exp||0}/100`;
+      $('public-wins').textContent=`승리 ${info.wins||0}회`;
+      $('public-note').textContent=info.profile_note||'등록한 자기소개가 없습니다.';
       window.qtimeProfileIcon?.set($('public-avatar'),info.profile_icon);
       $('profile-whisper').hidden=id===user.id;
+      $('profile-friend').hidden=id===user.id;
       $('public-profile-dialog').showModal();
     }catch(error){alert('프로필 열기 실패: '+errorText(error))}
   }
@@ -204,16 +217,15 @@
     notice.style.setProperty('--shout-color',entry.color);
     const label=document.createElement('small');label.textContent=`📣 확성기 · ${entry.nickname||'도전자'}`;
     const message=document.createElement('span');message.textContent=entry.message;
-    notice.append(label,message);document.body.append(notice);
+    notice.append(label,message);
+    const overlay=$('feature-overlay');
+    (overlay?.open?overlay:document.body).append(notice);
     setTimeout(()=>{notice.remove();showingShout=false;nextShout()},3000);
   }
   function nextShout(){
     if(showingShout||!shoutQueue.length)return;
     showingShout=true;const entry=shoutQueue.shift();
-    if(roomId){
-      if(frame()?.qtimeRoomBridge?.shout)frame().qtimeRoomBridge.shout(entry,()=>{showingShout=false;nextShout()});
-      else {showingShout=false;shoutQueue.unshift(entry);setTimeout(nextShout,250)}
-    }else makeShout(entry);
+    makeShout(entry);
   }
   async function refreshShouts(){
     if(!client||!user||shoutRefreshing)return;
@@ -221,8 +233,12 @@
     try{
       const rows=await rpc('qtime_shout_recent',{});
       if(!shoutInitialized){
+        // A client that starts while an announcement is still active must see it.
+        const newest=(rows||[]).at(-1);
+        if(newest&&Date.now()-Date.parse(newest.created_at)<3000)shoutQueue.push(newest);
         lastShout=Math.max(lastShout,0,...(rows||[]).map(entry=>Number(entry.id)||0));
         shoutInitialized=true;
+        nextShout();
         return;
       }
       for(const entry of rows||[]){
@@ -240,7 +256,14 @@
     shoutInitialized=true;
     shoutQueue.push({id:sentId,nickname:profile?.nickname||'도전자',message,color});
     nextShout();
+    refreshShopBalance();
   };
+  async function refreshShopBalance(){
+    if(!client||!user)return;
+    const data=await rpc('qtime_shop_list',{});
+    const count=(data.products||[]).find(item=>item.id==='shout')?.quantity||0;
+    $('shout-balance').textContent=count+'개';
+  }
   async function start(){
     if(!roomId)return;
     try{await rpc('qtime_match_start_v2',{p_room_id:roomId});await refreshRoom()}
@@ -264,6 +287,11 @@
   $('public-profile-close').onclick=()=>$('public-profile-dialog').close();
   $('public-profile-done').onclick=()=>$('public-profile-dialog').close();
   $('profile-whisper').onclick=prepareWhisper;
+  $('profile-friend').onclick=async()=>{
+    if(!selectedProfile||!client)return;
+    try{await rpc('qtime_friend_request',{p_user_id:selectedProfile.id});$('public-profile-dialog').close();alert('친구 요청을 보냈습니다.')}
+    catch(error){alert('친구 요청 실패: '+errorText(error))}
+  };
   window.qtimeChatCommands?.attach($('chat-input'));
   $('chat-form').onsubmit=async event=>{
     event.preventDefault();const input=$('chat-input'),value=input.value.trim();if(!value||!client)return;
@@ -289,6 +317,7 @@
   window.addEventListener('qtime:signed-in',event=>{
     reset();({client,user,profile}=event.detail);
     refreshRooms();refreshChannel();refreshShouts();
+    refreshShopBalance().catch(error=>status('상점 연결 오류: '+errorText(error)));
     lobbyPoll=setInterval(()=>{refreshRooms();refreshChannel()},4000);
     shoutPoll=setInterval(refreshShouts,1000);
     rpc('qtime_my_room').then(id=>{if(id&&user&&!roomId)openRoom(id)})

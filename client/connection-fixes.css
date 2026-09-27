@@ -26,3 +26,16 @@
 body:has(#game-screen.active) .qtime-shout-notice{top:auto;bottom:84px;max-width:min(680px,calc(100% - 30px));font-size:17px}
 
 .slot.compact:has(.host-actions){gap:3px}.slot.compact:has(.host-actions) .profile-icon{width:54px;height:54px;font-size:36px}.slot.compact:has(.host-actions) .qtime-profile-art{width:100%;height:100%;object-fit:contain}.slot.compact .host-actions{display:flex;justify-content:center;gap:3px;width:100%}.slot.compact .host-actions .profile-view-btn{font-size:10px;padding:3px 4px;white-space:nowrap}.slot.compact:has(.host-actions)>.profile-view-btn{margin:0}
+
+.chat-section{min-height:0;overflow:hidden}.chat-log{min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#81bad1 #193248}.side .chat{min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#81bad1 #193248}
+.chat-log>*{flex:0 0 auto}.chat-log::-webkit-scrollbar,.side .chat::-webkit-scrollbar{width:10px}.chat-log::-webkit-scrollbar-thumb,.side .chat::-webkit-scrollbar-thumb{background:#76aeca;border:2px solid #193248;border-radius:9px}.chat-log::-webkit-scrollbar-track,.side .chat::-webkit-scrollbar-track{background:#193248}
+
+#feature-overlay .qtime-shout-notice{position:fixed;z-index:1000001;top:14px;bottom:auto;left:50%;transform:translateX(-50%);pointer-events:none}
+.profile-note-label{display:block;margin:12px 0 6px;color:#bde9f6;font-weight:800}
+#profile-note{display:block;width:100%;resize:none;max-height:85px;padding:9px;border:1px solid #77acc2;border-radius:9px;background:#112d43;color:white;font:inherit}
+#save-profile-note{margin:7px 0;padding:8px 14px;background:#eeb75c;color:#18354a;font-weight:900}
+#public-note{white-space:pre-wrap;overflow-wrap:anywhere;color:#e8f5fb}
+.qtime-feature-dialog{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);margin:0;max-width:min(700px,calc(100vw - 30px));width:650px;max-height:calc(100vh - 30px);overflow:hidden;border:2px solid #83bfd6;border-radius:16px;background:#1a354b;color:#f0fbff;padding:22px;box-shadow:0 22px 60px #000c}
+.qtime-feature-dialog::backdrop{background:#071727ba}.qtime-feature-dialog header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}.qtime-feature-dialog h2{margin:0;font-size:23px}.qtime-feature-dialog button{border:1px solid #6599b1;border-radius:8px;padding:8px 12px;background:#295574;color:#fff;cursor:pointer}.qtime-feature-dialog .tabs{display:flex;gap:8px;margin-bottom:12px}.qtime-feature-dialog .tabs button[aria-selected=true]{background:#f4bc5c;color:#142d42}.qtime-feature-dialog .rank-list{height:min(410px,55vh);overflow-y:auto;overscroll-behavior:contain}.qtime-feature-dialog .rank-row{display:flex;align-items:center;gap:12px;padding:9px;border-bottom:1px solid #4e728a}.qtime-feature-dialog .rank-row strong{flex:1}.qtime-feature-dialog .setting-row{display:flex;justify-content:space-between;gap:15px;padding:15px 0;border-bottom:1px solid #496b7e}
+
+.exp-track span{background:#ffd15a!important;transition:width .5s ease}

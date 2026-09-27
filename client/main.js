@@ -14,6 +14,7 @@ function createWindow() {
     minWidth: 960,
     minHeight: 620,
     title: 'Q-TIME',
+    icon: path.join(__dirname, 'assets', 'icon', 'qtime-b2.png'),
     backgroundColor: '#102544',
     webPreferences: {
       contextIsolation: true,
