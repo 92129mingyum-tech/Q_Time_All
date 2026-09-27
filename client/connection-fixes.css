@@ -23,7 +23,7 @@
 .side .chat .whisper{color:#efdfff;background:#29445c;border-left:3px solid #c49cff;padding:4px 7px;border-radius:5px}
 .slot.compact .profile-view-btn{margin-top:2px;font-size:11px;padding:4px 8px}
 
-body:has(#game-screen.active) .qtime-shout-notice{top:auto;bottom:84px;max-width:min(680px,calc(100% - 30px));font-size:17px}
+body:has(#game-screen.active) .qtime-shout-notice{top:16px;bottom:auto;max-width:min(680px,calc(100% - 30px));font-size:17px}
 
 .slot.compact:has(.host-actions){gap:3px}.slot.compact:has(.host-actions) .profile-icon{width:54px;height:54px;font-size:36px}.slot.compact:has(.host-actions) .qtime-profile-art{width:100%;height:100%;object-fit:contain}.slot.compact .host-actions{display:flex;justify-content:center;gap:3px;width:100%}.slot.compact .host-actions .profile-view-btn{font-size:10px;padding:3px 4px;white-space:nowrap}.slot.compact:has(.host-actions)>.profile-view-btn{margin:0}
 
