@@ -61,7 +61,7 @@
       if(entry.status==='pending'&&entry.incoming){
         const accept=document.createElement('button');accept.textContent='수락';accept.onclick=()=>act(entry.id,'accept');row.append(accept);
       }
-      const remove=document.createElement('button');remove.textContent=entry.status==='accepted'?'친구 삭제':'거절/취소';remove.onclick=()=>act(entry.id,'remove');row.append(remove);
+      const remove=document.createElement('button');remove.textContent=entry.status==='accepted'?'친구 삭제':'거절/취소';remove.onclick=async()=>{if(await window.qtimeDialog.confirm(`${entry.nickname||'이 이용자'}님의 ${entry.status==='accepted'?'친구 관계를 삭제':'신청을 거절 또는 취소'}할까요?`,{title:'친구 관리',type:'danger',okText:'처리'}))act(entry.id,'remove')};row.append(remove);
       friendList.append(row);
     }
     if(!(data||[]).length)friendList.textContent='등록된 친구가 없습니다. 접속자 프로필에서 친구를 신청하세요.';
@@ -71,8 +71,10 @@
     if(error)alert(error.message);else{friends.close();showFriends()}
   }
   document.querySelector('[data-pending="친구"]').onclick=showFriends;
+  async function refreshFriendBadge(){const client=window.qtimeAuthClient;if(!client)return;const {data}=await client.rpc('qtime_friend_list',{});const pending=(data||[]).filter(entry=>entry.status==='pending'&&entry.incoming).length;const button=document.querySelector('[data-pending="친구"]');if(button)button.textContent=pending?`친구 (${pending})`:'친구'}
   const admin=make('admin-notice-dialog','최고 관리자 센터');
-  admin.insertAdjacentHTML('beforeend',`<label for="admin-notice-text">전체 이용자에게 보일 공지</label><textarea id="admin-notice-text" maxlength="180" rows="4" style="width:100%;resize:none;padding:10px;background:#10283c;color:white;border:1px solid #6ca0b6;border-radius:8px"></textarea><button type="button" id="admin-notice-submit">공지 등록</button><p id="admin-notice-status" role="status"></p>`);
+  admin.classList.add('admin-center');
+  admin.insertAdjacentHTML('beforeend',`<nav class="admin-tabs" aria-label="관리자 메뉴"><button type="button" class="active" data-admin-tab="notice">공지 관리</button><button type="button" data-admin-tab="users">이용자 관리</button><button type="button" data-admin-tab="delete">아이디 삭제</button></nav><section class="admin-pane active" data-admin-pane="notice"><label for="admin-notice-text">전체 이용자에게 보일 공지</label><textarea id="admin-notice-text" maxlength="180" rows="4"></textarea><button type="button" id="admin-notice-submit">공지 등록</button></section><section class="admin-pane" data-admin-pane="users"><div class="admin-search"><input id="admin-user-query" placeholder="아이디 또는 닉네임"><button type="button" id="admin-user-search">검색</button></div><div id="admin-user-list" class="admin-user-list"></div><div id="admin-user-result" class="admin-selected">이용자를 선택하세요.</div><div class="admin-adjust-row"><select id="admin-action"><option value="coins">보유 포인트</option><option value="exp">경험치</option><option value="level">레벨</option><option value="wins">승리 횟수</option></select><input id="admin-value" type="number" min="0" placeholder="변경할 값"><input id="admin-reason" maxlength="120" placeholder="변경 사유(필수)"><button type="button" id="admin-adjust">조정 적용</button></div><div class="admin-ban-actions"><button type="button" id="admin-ban">이용 정지</button><button type="button" id="admin-unban">정지 해제</button></div></section><section class="admin-pane" data-admin-pane="delete"><p class="admin-warning">삭제한 아이디와 게임 기록은 복구할 수 없습니다.</p><div class="admin-search"><input id="admin-delete-query" placeholder="삭제할 아이디 또는 닉네임"><button type="button" id="admin-delete-search">검색</button></div><div id="admin-delete-list" class="admin-user-list"></div><input id="admin-delete-reason" maxlength="120" placeholder="삭제 사유(필수)"><button type="button" id="admin-delete-user" class="danger">선택한 아이디 삭제</button></section><p id="admin-notice-status" role="status"></p>`);
   $('open-admin-notice').onclick=()=>admin.showModal();
   async function refreshNotice(){
     const client=window.qtimeAuthClient;if(!client)return;
@@ -84,13 +86,28 @@
     $('admin-notice-status').textContent=error?'등록 실패: '+error.message:'공지가 등록되었습니다.';
     if(!error){$('admin-notice-text').value='';refreshNotice()}
   };
-  admin.insertAdjacentHTML('beforeend',`<hr><h3>이용자 정보 조정</h3><input id="admin-user-query" placeholder="아이디 또는 닉네임"><button type="button" id="admin-user-search">검색</button><div id="admin-user-result"></div><select id="admin-action"><option value="coins">보유 포인트</option><option value="exp">경험치</option><option value="level">레벨</option><option value="wins">승리 횟수</option></select><input id="admin-value" type="number" min="0" placeholder="변경할 값"><input id="admin-reason" maxlength="120" placeholder="변경 사유(필수)"><button type="button" id="admin-adjust">조정 적용</button><hr><h3>아이템 지급/회수</h3><input id="admin-product" placeholder="상품 ID (shout, hint 등)"><input id="admin-item-delta" type="number" placeholder="+지급 / -회수"><button type="button" id="admin-item-adjust">아이템 적용</button>`);
   let adminTarget=null;
-  $('admin-user-search').onclick=async()=>{const {data,error}=await window.qtimeAuthClient.rpc('qtime_admin_user_search',{p_query:$('admin-user-query').value});adminTarget=data?.[0]||null;$('admin-user-result').textContent=error?'검색 실패: '+error.message:adminTarget?`${adminTarget.nickname} · LV.${adminTarget.level} · ${adminTarget.coins} P`:'검색 결과가 없습니다.'};
+  let adminDeleteTarget=null;
+  function selectAdminUser(entry,mode='adjust'){
+    if(mode==='delete'){adminDeleteTarget=entry;document.querySelectorAll('#admin-delete-list .admin-user-row').forEach(row=>row.classList.toggle('selected',row.dataset.id===String(entry.id)));return}
+    adminTarget=entry;document.querySelectorAll('#admin-user-list .admin-user-row').forEach(row=>row.classList.toggle('selected',row.dataset.id===String(entry.id)));$('admin-user-result').textContent=`${entry.login_id||'아이디 미등록'} · ${entry.nickname} · LV.${entry.level} · ${entry.coins} P · ${entry.banned?'이용 정지':'정상'}`;
+  }
+  async function loadAdminUsers(query='',mode='adjust'){
+    const target=mode==='delete'?$('admin-delete-list'):$('admin-user-list');target.textContent='이용자 목록을 불러오는 중…';
+    const {data,error}=await window.qtimeAuthClient.rpc('qtime_admin_user_list',{p_query:query||'',p_offset:0,p_limit:200});
+    if(error){target.textContent='목록 불러오기 실패: '+error.message;return}
+    target.replaceChildren();for(const entry of data||[]){const row=document.createElement('button');row.type='button';row.className='admin-user-row';row.dataset.id=entry.id;row.innerHTML='<span></span><strong></strong><small></small>';row.querySelector('span').textContent=entry.login_id||'아이디 미등록';row.querySelector('strong').textContent=entry.nickname||'닉네임 없음';row.querySelector('small').textContent=`${Number(entry.coins||0).toLocaleString()} P · LV.${entry.level||1}${entry.banned?' · 이용 정지':''}`;row.onclick=()=>selectAdminUser(entry,mode);target.append(row)}
+    if(!(data||[]).length)target.textContent='검색 결과가 없습니다.';
+  }
+  admin.querySelectorAll('[data-admin-tab]').forEach(button=>button.onclick=()=>{admin.querySelectorAll('[data-admin-tab]').forEach(item=>item.classList.toggle('active',item===button));admin.querySelectorAll('[data-admin-pane]').forEach(pane=>pane.classList.toggle('active',pane.dataset.adminPane===button.dataset.adminTab));if(button.dataset.adminTab==='users')loadAdminUsers();if(button.dataset.adminTab==='delete')loadAdminUsers('', 'delete')});
+  $('admin-user-search').onclick=()=>loadAdminUsers($('admin-user-query').value.trim());
+  $('admin-delete-search').onclick=()=>loadAdminUsers($('admin-delete-query').value.trim(),'delete');
   $('admin-adjust').onclick=async()=>{if(!adminTarget){alert('먼저 이용자를 검색하세요.');return}if(!$('admin-reason').value.trim()){alert('변경 사유를 입력하세요.');return}const {error}=await window.qtimeAuthClient.rpc('qtime_admin_adjust',{p_target:adminTarget.id,p_field:$('admin-action').value,p_value:Number($('admin-value').value),p_reason:$('admin-reason').value.trim()});$('admin-notice-status').textContent=error?'조정 실패: '+error.message:'조정했습니다. 감사 기록에 저장됩니다.';if(!error)$('admin-user-search').click()};
-  $('admin-item-adjust').onclick=async()=>{if(!adminTarget||!$('admin-reason').value.trim()){alert('이용자 검색과 변경 사유가 필요합니다.');return}const {error}=await window.qtimeAuthClient.rpc('qtime_admin_item_adjust',{p_target:adminTarget.id,p_product_id:$('admin-product').value.trim(),p_delta:Number($('admin-item-delta').value),p_reason:$('admin-reason').value.trim()});$('admin-notice-status').textContent=error?'아이템 조정 실패: '+error.message:'아이템을 조정했습니다.'};
-  window.addEventListener('qtime:signed-in',refreshNotice);
-  setInterval(refreshNotice,5000);
+  async function setBan(value){if(!adminTarget){await window.qtimeDialog.alert('먼저 이용자를 선택하세요.',{title:'이용자 관리'});return}const reason=$('admin-reason').value.trim();if(!reason){await window.qtimeDialog.alert('변경 사유를 입력하세요.',{title:'이용자 관리'});return}const {error}=await window.qtimeAuthClient.rpc('qtime_admin_set_ban',{p_target:adminTarget.id,p_banned:value,p_reason:reason});$('admin-notice-status').textContent=error?'처리 실패: '+error.message:value?'이용 정지 처리했습니다.':'이용 정지를 해제했습니다.';if(!error)loadAdminUsers($('admin-user-query').value.trim())}
+  $('admin-ban').onclick=()=>setBan(true);$('admin-unban').onclick=()=>setBan(false);
+  $('admin-delete-user').onclick=async()=>{if(!adminDeleteTarget){await window.qtimeDialog.alert('삭제할 이용자를 선택하세요.',{title:'아이디 삭제'});return}const reason=$('admin-delete-reason').value.trim();if(!reason){await window.qtimeDialog.alert('삭제 사유를 입력하세요.',{title:'아이디 삭제'});return}if(!await window.qtimeDialog.confirm(`${adminDeleteTarget.login_id||adminDeleteTarget.nickname} 아이디를 영구 삭제할까요?\n이 작업은 복구할 수 없습니다.`,{title:'아이디 삭제',type:'danger',okText:'영구 삭제'}))return;const {error}=await window.qtimeAuthClient.rpc('qtime_admin_delete_user',{p_target:adminDeleteTarget.id,p_reason:reason});$('admin-notice-status').textContent=error?'삭제 실패: '+error.message:'아이디를 삭제했습니다.';if(!error){adminDeleteTarget=null;loadAdminUsers($('admin-delete-query').value.trim(),'delete')}};
+  window.addEventListener('qtime:signed-in',()=>{refreshNotice();refreshFriendBadge()});
+  setInterval(()=>{refreshNotice();refreshFriendBadge()},5000);
   $('save-profile-note').onclick=async()=>{
     const client=window.qtimeAuthClient;if(!client){alert('로그인이 필요합니다.');return}
     const {error}=await client.rpc('qtime_profile_save_note',{p_note:$('profile-note').value});

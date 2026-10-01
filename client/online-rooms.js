@@ -134,6 +134,11 @@
     roomId=id;
     window.qtimeShowFeature('./waiting-game.html','온라인 게임 대기실');
     await refreshRoom();
+    try{
+      const shop=await rpc('qtime_shop_list',{});
+      const audience=(shop?.products||[]).find(item=>item.id==='audience');
+      frame()?.qtimeRoomBridge?.inventoryUpdate({audience:Number(audience?.quantity||0)});
+    }catch(error){status('아이템 보유 수량 확인 실패: '+errorText(error))}
     clearInterval(roomPoll);roomPoll=setInterval(refreshRoom,650);
   }
   async function create(event){
@@ -176,7 +181,7 @@
   async function setTeam(team){if(!roomId)return;try{await rpc('qtime_team_select',{p_room_id:roomId,p_team:team});await refreshRoom()}catch(error){alert('팀 선택 실패: '+errorText(error))}}
   async function addTeamCpu(team){if(!roomId)return;try{await rpc('qtime_team_cpu_add',{p_room_id:roomId,p_team:team});await refreshRoom()}catch(error){alert('CPU 추가 실패: '+errorText(error))}}
   async function useHalfHint(data){if(!roomId)return;try{const result=await rpc('qtime_half_hint_use',{p_room_id:roomId,p_round:data.round});frame()?.qtimeRoomBridge?.halfHintUpdate(result)}catch(error){alert('반반 힌트 사용 실패: '+errorText(error))}}
-  async function useAudience(data){if(!roomId)return;try{audienceRound=Number(data.round);const result=await rpc('qtime_audience_state',{p_room_id:roomId,p_round:audienceRound});frame()?.qtimeRoomBridge?.audienceUpdate(result)}catch(error){audienceRound=0;alert('도와줘 친구들 사용 실패: '+errorText(error))}}
+  async function useAudience(data){if(!roomId)return;try{audienceRound=Number(data.round);const result=await rpc('qtime_audience_use',{p_room_id:roomId,p_round:audienceRound});frame()?.qtimeRoomBridge?.audienceUpdate(result)}catch(error){audienceRound=0;notice('도와줘 친구들 사용 실패: '+errorText(error),{title:'아이템 사용 오류',type:'error'})}}
   function openRoomMenu(menu){const targets={profile:'#open-profile',ranking:'[data-pending="랭킹"]',settings:'[data-pending="설정"]'};if(menu==='shop'){window.qtimeShowFeature('./shop.html','Q-TIME 상점');return}document.querySelector(targets[menu])?.click()}
   async function closeRoom(leave=true){
     const id=roomId;roomId=null;room=match=null;clearInterval(roomPoll);roomPoll=null;
@@ -204,19 +209,17 @@
   function ensureInviteDialog(){
     let dialog=$('invite-dialog');if(dialog)return dialog;
     dialog=document.createElement('dialog');dialog.id='invite-dialog';dialog.className='invite-dialog';
-    dialog.innerHTML=`<div class="invite-head"><div><small>Q-TIME INVITE</small><h2>현재 접속자 초대</h2><p>같이 플레이할 이용자를 선택하세요.</p></div><button type="button" class="invite-close" aria-label="닫기">✕</button></div><input id="invite-search" type="search" placeholder="닉네임 검색" aria-label="초대할 이용자 검색"><div id="invite-user-list" class="invite-user-list"></div>`;
+    dialog.innerHTML=`<div class="invite-head"><div><small>Q-TIME INVITE</small><h2>현재 접속자 초대</h2><p>접속 중인 이용자를 목록에서 선택하세요.</p></div><button type="button" class="invite-close" aria-label="닫기">✕</button></div><div id="invite-user-list" class="invite-user-list"></div>`;
     document.body.append(dialog);dialog.querySelector('.invite-close').onclick=()=>dialog.close();
     dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close()});
-    dialog.querySelector('#invite-search').addEventListener('input',renderInviteUsers);
     return dialog;
   }
   function renderInviteUsers(){
     const dialog=ensureInviteDialog(),list=dialog.querySelector('#invite-user-list');
-    const query=dialog.querySelector('#invite-search').value.trim().toLowerCase();
     const current=new Set((room?.members||[]).map(item=>String(item.user_id)));
-    const people=channelUsers.filter(item=>item.user_id!==user?.id&&!current.has(String(item.user_id))&&(!query||String(item.nickname||'').toLowerCase().includes(query)));
+    const people=channelUsers.filter(item=>item.user_id!==user?.id&&!current.has(String(item.user_id)));
     list.replaceChildren();
-    if(!people.length){const empty=document.createElement('p');empty.className='invite-empty';empty.textContent=query?'검색 결과가 없습니다.':'현재 초대 가능한 접속자가 없습니다.';list.append(empty);return}
+    if(!people.length){const empty=document.createElement('p');empty.className='invite-empty';empty.textContent='현재 초대 가능한 접속자가 없습니다.';list.append(empty);return}
     for(const person of people){
       const row=document.createElement('article');row.className='invite-user';
       const icon=document.createElement('span');icon.className='invite-avatar';window.qtimeProfileIcon?.set(icon,person.profile_icon);
@@ -225,7 +228,7 @@
       row.append(icon,info,button);list.append(row);
     }
   }
-  function showInviteDialog(){const dialog=ensureInviteDialog();dialog.querySelector('#invite-search').value='';renderInviteUsers();dialog.showModal();dialog.querySelector('#invite-search').focus()}
+  function showInviteDialog(){const dialog=ensureInviteDialog();renderInviteUsers();dialog.showModal()}
   async function invitePeople(){
     if(!roomId)return;
     try{

@@ -5,7 +5,7 @@
   let seenMessage=0, activeBubble=null, bubbleUntil=0, resultTimer=null;
   let seenPrivate=0;
   let clockOffset=0, lastRoundKey='', lastRevealKey='', lastResultKey='';
-  let optionOrder=[0,1,2,3],halfLeft=3,halfRound=0,audienceRound=0;
+  let optionOrder=[0,1,2,3],halfLeft=3,halfRound=0,audienceRound=0,audienceLeft=0;
   function shuffledOptions(key,count){
     let seed=2166136261;
     for(const char of key)seed=Math.imul(seed^char.charCodeAt(0),16777619)>>>0;
@@ -180,7 +180,7 @@
     $('feedback').textContent='';
     $('explanation').hidden=true;
     $('answers').replaceChildren();
-    halfRound=0;audienceRound=0;$('half-hint').disabled=halfLeft<=0;$('audience-help').classList.remove('active');
+    halfRound=0;audienceRound=0;$('half-hint').disabled=halfLeft<=0;$('audience-help').disabled=audienceLeft<=0;$('audience-help').classList.remove('active');
     optionOrder=shuffledOptions(`${next.started_at}:${next.round}`,(next.options||[]).length);
     optionOrder.forEach((original,index)=>{
       const button=document.createElement('button');button.type='button';
@@ -190,7 +190,8 @@
     screen('game-screen');drawPlayers(true);
   }
   function halfHintUpdate(data){if(!data)return;halfLeft=Number(data.remaining??halfLeft);halfRound=round;$('half-count').textContent=String(halfLeft);$('half-hint').disabled=true;for(const original of data.removed||[]){const shown=optionOrder.indexOf(Number(original));const button=$('answers').children[shown];if(button){button.classList.add('hint-removed');button.disabled=true;button.textContent='✕ 제거된 오답'}}}
-  function audienceUpdate(data){if(!data||Number(data.round)!==round)return;audienceRound=round;$('audience-help').classList.add('active');const rates=data.rates||[0,0,0,0],max=Math.max(...rates);[...$('answers').children].forEach((button,shown)=>{const original=optionOrder[shown],rate=Number(rates[original]||0);button.dataset.rate=rate+'%';button.classList.toggle('audience-top',max>0&&rate===max);button.querySelector('.vote-rate')?.remove();const label=document.createElement('span');label.className='vote-rate';label.textContent=` ${rate}%`;button.append(label)})}
+  function inventoryUpdate(data){if(!data)return;audienceLeft=Math.max(0,Number(data.audience??audienceLeft));$('audience-count').textContent=String(audienceLeft);$('audience-help').disabled=audienceLeft<=0||phase!=='question'}
+  function audienceUpdate(data){if(!data||Number(data.round)!==round)return;if(data.remaining!=null)inventoryUpdate({audience:data.remaining});audienceRound=round;$('audience-help').classList.add('active');$('audience-help').disabled=true;const rates=data.rates||[0,0,0,0],max=Math.max(...rates),responses=Number(data.responses||0);$('feedback').textContent=responses?`친구들 선택 ${responses}명 실시간 집계 중`:'아직 집계된 답변이 없습니다.';[...$('answers').children].forEach((button,shown)=>{const original=optionOrder[shown],rate=Number(rates[original]||0);button.dataset.rate=rate+'%';button.classList.toggle('audience-top',max>0&&rate===max);button.querySelector('.vote-rate')?.remove();const label=document.createElement('span');label.className='vote-rate';label.textContent=` ${rate}%`;button.append(label)})}
   function selected(next){
     [...$('answers').children].forEach((button,i)=>button.classList.toggle('selected',optionOrder[i]===next.my_choice));
     const mark=$('my-answer-mark');if(mark)mark.textContent=next.my_choice==null?'':String(optionOrder.indexOf(next.my_choice)+1);
@@ -252,7 +253,7 @@
       const revealKey=key;
       if(lastRevealKey!==revealKey){
         lastRevealKey=revealKey;
-        audienceRound=0;$('audience-help').classList.remove('active');
+        audienceRound=0;$('audience-help').classList.remove('active');$('audience-help').disabled=true;
         [...$('answers').children].forEach((button,i)=>{
           button.disabled=true;
           button.classList.remove('audience-top');button.querySelector('.vote-rate')?.remove();
@@ -299,7 +300,7 @@
   $('invite').onclick=()=>send('invitePeople');
   $('join-red').onclick=()=>send('setTeam','RED');$('join-blue').onclick=()=>send('setTeam','BLUE');
   $('cpu-red').onclick=()=>send('addTeamCpu','RED');$('cpu-blue').onclick=()=>send('addTeamCpu','BLUE');
-  $('leave').onclick=()=>send('closeRoom');
+  $('leave').onclick=async()=>{if(await window.qtimeDialog.confirm('대기방에서 나가시겠습니까?',{title:'방 나가기',type:'danger',okText:'나가기'}))send('closeRoom')};
   $('back-room').onclick=async()=>{
     if(await window.qtimeDialog.confirm('게임 중 방을 나가시겠습니까?\n이 경기의 경험치와 게임 재화는 지급되지 않습니다.',{title:'게임 나가기',type:'danger',okText:'나가기'}))send('closeRoom');
   };
@@ -314,7 +315,7 @@
     if(!message)return;send('sendRoomMessage',message);input.value='';
   };
   $('half-hint').onclick=()=>{if(phase!=='question'||halfRound===round||halfLeft<=0)return;send('useHalfHint',{round})};
-  $('audience-help').onclick=()=>{if(phase!=='question')return;audienceRound=round;send('useAudience',{round})};
+  $('audience-help').onclick=()=>{if(phase!=='question'||audienceRound===round||audienceLeft<=0)return;send('useAudience',{round})};
   window.qtimeChatCommands?.attach($('chat-input'));
   window.qtimeChatCommands?.attach($('game-chat-input'));
   document.querySelectorAll('[data-room-menu]').forEach(button=>button.onclick=()=>{if(phase==='waiting')send('openRoomMenu',button.dataset.roomMenu)});
@@ -333,5 +334,5 @@
     if(phase==='question'){event.preventDefault();choose(Number(event.key)-1)}
   });
   addEventListener('resize',fit);fit();setInterval(updateClock,100);
-  window.qtimeRoomBridge={update:roomUpdate,matchUpdate,privateUpdate,shout,halfHintUpdate,audienceUpdate};
+  window.qtimeRoomBridge={update:roomUpdate,matchUpdate,privateUpdate,shout,halfHintUpdate,audienceUpdate,inventoryUpdate};
 })();

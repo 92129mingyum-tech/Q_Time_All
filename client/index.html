@@ -623,7 +623,7 @@
 <span class="notice-text">Q-TIME에 오신 것을 환영합니다!</span>
 </span>
 </div>
-    <div class="version">Client v0.1.22 <span id="status">업데이트 확인 중…</span>
+    <div class="version">Client v0.1.23 <span id="status">업데이트 확인 중…</span>
 </div>
   </footer>
 
@@ -675,6 +675,7 @@
 <h2>내 프로필</h2>
 <button type="button" id="close-profile">닫기</button>
 </div>
+<div class="profile-body">
 <div class="profile-summary">
 <div class="profile-character profile-symbol" id="profile-selected">🐶</div>
 <div class="profile-facts">
@@ -684,14 +685,18 @@
 <small id="profile-character-name">강아지 프로필</small>
 </div>
 </div>
-<label class="profile-note-label" for="profile-note">자기소개 · 상대 프로필에도 표시됩니다</label>
+</div>
+<div class="profile-editor">
+<label class="profile-note-label" for="profile-note">자기소개</label>
 <textarea id="profile-note" maxlength="140" rows="3" placeholder="나를 소개해 주세요">
 </textarea>
 <button type="button" id="save-profile-note">자기소개 저장</button>
+</div>
+</div>
 <h3 class="profile-grid-title">프로필 선택 <small>십이지신 무료 · 구매한 프로필 사용 가능</small></h3>
 <div class="profile-icon-grid" id="profile-icon-grid" role="group" aria-label="프로필 이모티콘 목록">
 </div>
-<p class="profile-hint">게임 속 전신 캐릭터와 별개인 프로필 이미지입니다. 유료 항목은 구매·이용권 기능을 연결한 뒤 사용할 수 있습니다.</p>
+<p class="profile-hint">게임 캐릭터와 별개로 표시되는 프로필 이미지입니다.</p>
 </dialog>
   <dialog class="modal" id="waiting-room" aria-label="게임 대기실">
 <div class="panel-header">
@@ -775,8 +780,9 @@ signupTab.onclick=()=>switchTab(true);
 function emailForId(id){id=String(id||'').trim();if(id.includes('@'))return id.toLowerCase();const hex=[...new TextEncoder().encode(id)].map(b=>b.toString(16).padStart(2,'0')).join('');return 'u_'+hex+'@users.quiztown.app'}
 async function enter(user){
  window.qtimeAuthClient=client;window.qtimeAuthUser=user;
- const {data,error}=await client.from('profiles').select('id,nickname,profile_icon,level,exp,coins,role').eq('id',user.id).single();
+ const {data,error}=await client.from('profiles').select('id,nickname,profile_icon,level,exp,coins,role,is_banned').eq('id',user.id).single();
  if(error||!data)throw Error('프로필을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+ if(data.is_banned){await client.auth.signOut();throw Error('이용이 정지된 아이디입니다. 관리자에게 문의해주세요.')}
  document.getElementById('open-admin-notice').hidden=data.role!=='superadmin';
  const role=data.role==='superadmin'?'최고관리자':data.role==='operator'?'운영자':'';
  document.querySelector('.user-name').textContent=(data.nickname||'도전자')+(role?' · '+role:'');const currentCard=document.querySelector('.user-card .user-info strong');if(currentCard)currentCard.textContent=(data.nickname||'도전자')+' (나)';
