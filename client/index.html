@@ -623,7 +623,7 @@
 <span class="notice-text">Q-TIME에 오신 것을 환영합니다!</span>
 </span>
 </div>
-    <div class="version">Client v0.1.23 <span id="status">업데이트 확인 중…</span>
+    <div class="version">Client v0.1.24 <span id="status">업데이트 확인 중…</span>
 </div>
   </footer>
 
@@ -780,8 +780,12 @@ signupTab.onclick=()=>switchTab(true);
 function emailForId(id){id=String(id||'').trim();if(id.includes('@'))return id.toLowerCase();const hex=[...new TextEncoder().encode(id)].map(b=>b.toString(16).padStart(2,'0')).join('');return 'u_'+hex+'@users.quiztown.app'}
 async function enter(user){
  window.qtimeAuthClient=client;window.qtimeAuthUser=user;
- const {data,error}=await client.from('profiles').select('id,nickname,profile_icon,level,exp,coins,role,is_banned').eq('id',user.id).single();
+ // Keep the core login/profile read independent from optional admin schema.
+ // Older databases do not have profiles.is_banned until the 0.1.23 SQL is applied.
+ const {data,error}=await client.from('profiles').select('id,nickname,profile_icon,level,exp,coins,role').eq('id',user.id).single();
  if(error||!data)throw Error('프로필을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+ const banResult=await client.from('profiles').select('is_banned').eq('id',user.id).maybeSingle();
+ data.is_banned=!banResult.error&&Boolean(banResult.data?.is_banned);
  if(data.is_banned){await client.auth.signOut();throw Error('이용이 정지된 아이디입니다. 관리자에게 문의해주세요.')}
  document.getElementById('open-admin-notice').hidden=data.role!=='superadmin';
  const role=data.role==='superadmin'?'최고관리자':data.role==='operator'?'운영자':'';
