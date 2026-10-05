@@ -43,7 +43,7 @@
       const card=document.createElement('div');card.className='arena-player';card.dataset.userId=member.user_id;
       if(member.team)card.classList.add('team-'+member.team.toLowerCase());
       if(member.user_id===meId)card.classList.add('mine');
-      const art=document.createElement('img');art.src=`./assets/characters/${i%2?'female':'male'}.png`;art.alt='';
+      const art=document.createElement('img');art.src=member.profile_icon==='img:admin'?'./assets/characters/admin.png':`./assets/characters/${i%2?'female':'male'}.png`;art.alt='';
       const plate=document.createElement('div');plate.className='plate';
       const name=document.createElement('span');name.textContent=member.nickname||'도전자';
       const score=document.createElement('b');score.textContent=(scores.get(member.user_id)??member.score??0)+'점';

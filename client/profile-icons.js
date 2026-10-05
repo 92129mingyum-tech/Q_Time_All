@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const imageNames=new Set(['bear','rabbit','cat','fox']);
+  const imageNames=new Set(['bear','rabbit','cat','fox','admin']);
   function set(element,icon){
     if(!element)return;
     const value=String(icon||'🙂');element.replaceChildren();

@@ -10,7 +10,9 @@
   const ranking=make('ranking-dialog','랭킹');
   const tabs=document.createElement('div');tabs.className='tabs';
   const list=document.createElement('div');list.className='rank-list';ranking.append(tabs,list);
+  let currentRankingMetric='level';
   async function showRanking(metric){
+    currentRankingMetric=metric;
     tabs.replaceChildren();for(const [key,label] of [['level','레벨'],['wins','승리 횟수']]){
       const button=document.createElement('button');button.textContent=label;button.setAttribute('aria-selected',String(key===metric));button.onclick=()=>showRanking(key);tabs.append(button);
     }
@@ -29,6 +31,7 @@
     if(!(data||[]).length)list.textContent='아직 랭킹 기록이 없습니다.';
   }
   document.querySelector('[data-pending="랭킹"]').onclick=()=>showRanking('level');
+  window.addEventListener('qtime:ranking-refresh',()=>{if(ranking.open)showRanking(currentRankingMetric)});
   const settings=make('settings-dialog','설정');
   settings.insertAdjacentHTML('beforeend',`<div class="setting-row"><label for="sound-toggle">효과음</label><input id="sound-toggle" type="checkbox" checked></div><div class="setting-row"><span>배경음</span><span>음원 선정 후 추가</span></div><h3>게임 방법</h3><p>방장은 참가자가 모두 준비하면 게임을 시작합니다. 답은 숫자 1~4 또는 클릭으로 선택하고, 7초 안에는 바꿀 수 있습니다. 미선택 시 무작위 답으로 처리하며 정답이면 점수의 절반을 받습니다.</p><p>방 채팅은 해당 방 참가자에게만 표시됩니다. 귓속말은 상대 프로필이나 /w 닉네임 메시지로 보냅니다.</p>`);
   for(const [id,key] of [['sound-toggle','sound']]){
@@ -95,17 +98,19 @@
   async function loadAdminUsers(query='',mode='adjust'){
     const target=mode==='delete'?$('admin-delete-list'):$('admin-user-list');target.textContent='이용자 목록을 불러오는 중…';
     const {data,error}=await window.qtimeAuthClient.rpc('qtime_admin_user_list',{p_query:query||'',p_offset:0,p_limit:200});
-    if(error){target.textContent='목록 불러오기 실패: '+error.message;return}
+    if(error){target.textContent=String(error.message||'').includes('qtime_admin_user_list')?'관리자 서버 기능이 아직 적용되지 않았습니다. 0.1.25 SQL을 적용해주세요.':'목록 불러오기 실패: '+error.message;return}
     target.replaceChildren();for(const entry of data||[]){const row=document.createElement('button');row.type='button';row.className='admin-user-row';row.dataset.id=entry.id;row.innerHTML='<span></span><strong></strong><small></small>';row.querySelector('span').textContent=entry.login_id||'아이디 미등록';row.querySelector('strong').textContent=entry.nickname||'닉네임 없음';row.querySelector('small').textContent=`${Number(entry.coins||0).toLocaleString()} P · LV.${entry.level||1}${entry.banned?' · 이용 정지':''}`;row.onclick=()=>selectAdminUser(entry,mode);target.append(row)}
     if(!(data||[]).length)target.textContent='검색 결과가 없습니다.';
   }
   admin.querySelectorAll('[data-admin-tab]').forEach(button=>button.onclick=()=>{admin.querySelectorAll('[data-admin-tab]').forEach(item=>item.classList.toggle('active',item===button));admin.querySelectorAll('[data-admin-pane]').forEach(pane=>pane.classList.toggle('active',pane.dataset.adminPane===button.dataset.adminTab));if(button.dataset.adminTab==='users')loadAdminUsers();if(button.dataset.adminTab==='delete')loadAdminUsers('', 'delete')});
   $('admin-user-search').onclick=()=>loadAdminUsers($('admin-user-query').value.trim());
   $('admin-delete-search').onclick=()=>loadAdminUsers($('admin-delete-query').value.trim(),'delete');
-  $('admin-adjust').onclick=async()=>{if(!adminTarget){alert('먼저 이용자를 검색하세요.');return}if(!$('admin-reason').value.trim()){alert('변경 사유를 입력하세요.');return}const {error}=await window.qtimeAuthClient.rpc('qtime_admin_adjust',{p_target:adminTarget.id,p_field:$('admin-action').value,p_value:Number($('admin-value').value),p_reason:$('admin-reason').value.trim()});$('admin-notice-status').textContent=error?'조정 실패: '+error.message:'조정했습니다. 감사 기록에 저장됩니다.';if(!error)$('admin-user-search').click()};
+  const syncAdminReason=()=>{const points=$('admin-action').value==='coins';$('admin-reason').hidden=points;$('admin-reason').required=!points};
+  $('admin-action').onchange=syncAdminReason;syncAdminReason();
+  $('admin-adjust').onclick=async()=>{if(!adminTarget){alert('먼저 이용자를 검색하세요.');return}const field=$('admin-action').value,reason=$('admin-reason').value.trim();if(field!=='coins'&&!reason){alert('변경 사유를 입력하세요.');return}const {error}=await window.qtimeAuthClient.rpc('qtime_admin_adjust',{p_target:adminTarget.id,p_field:field,p_value:Number($('admin-value').value),p_reason:reason});$('admin-notice-status').textContent=error?'조정 실패: '+error.message:'조정했습니다.';if(!error)$('admin-user-search').click()};
   async function setBan(value){if(!adminTarget){await window.qtimeDialog.alert('먼저 이용자를 선택하세요.',{title:'이용자 관리'});return}const reason=$('admin-reason').value.trim();if(!reason){await window.qtimeDialog.alert('변경 사유를 입력하세요.',{title:'이용자 관리'});return}const {error}=await window.qtimeAuthClient.rpc('qtime_admin_set_ban',{p_target:adminTarget.id,p_banned:value,p_reason:reason});$('admin-notice-status').textContent=error?'처리 실패: '+error.message:value?'이용 정지 처리했습니다.':'이용 정지를 해제했습니다.';if(!error)loadAdminUsers($('admin-user-query').value.trim())}
   $('admin-ban').onclick=()=>setBan(true);$('admin-unban').onclick=()=>setBan(false);
-  $('admin-delete-user').onclick=async()=>{if(!adminDeleteTarget){await window.qtimeDialog.alert('삭제할 이용자를 선택하세요.',{title:'아이디 삭제'});return}const reason=$('admin-delete-reason').value.trim();if(!reason){await window.qtimeDialog.alert('삭제 사유를 입력하세요.',{title:'아이디 삭제'});return}if(!await window.qtimeDialog.confirm(`${adminDeleteTarget.login_id||adminDeleteTarget.nickname} 아이디를 영구 삭제할까요?\n이 작업은 복구할 수 없습니다.`,{title:'아이디 삭제',type:'danger',okText:'영구 삭제'}))return;const {error}=await window.qtimeAuthClient.rpc('qtime_admin_delete_user',{p_target:adminDeleteTarget.id,p_reason:reason});$('admin-notice-status').textContent=error?'삭제 실패: '+error.message:'아이디를 삭제했습니다.';if(!error){adminDeleteTarget=null;loadAdminUsers($('admin-delete-query').value.trim(),'delete')}};
+  $('admin-delete-user').onclick=async()=>{if(!adminDeleteTarget){await window.qtimeDialog.alert('삭제할 이용자를 선택하세요.',{title:'아이디 삭제'});return}const reason=$('admin-delete-reason').value.trim();if(!reason){await window.qtimeDialog.alert('삭제 사유를 입력하세요.',{title:'아이디 삭제'});return}if(!await window.qtimeDialog.confirm(`${adminDeleteTarget.login_id||adminDeleteTarget.nickname} 아이디를 영구 삭제할까요?\n이 작업은 복구할 수 없습니다.`,{title:'아이디 삭제',type:'danger',okText:'영구 삭제'}))return;const {error}=await window.qtimeAuthClient.rpc('qtime_admin_delete_user',{p_target:adminDeleteTarget.id,p_reason:reason});$('admin-notice-status').textContent=error?'삭제 실패: '+error.message:'아이디를 삭제했습니다.';if(!error){adminDeleteTarget=null;loadAdminUsers($('admin-delete-query').value.trim(),'delete');window.dispatchEvent(new Event('qtime:ranking-refresh'))}};
   window.addEventListener('qtime:signed-in',()=>{refreshNotice();refreshFriendBadge()});
   setInterval(()=>{refreshNotice();refreshFriendBadge()},5000);
   $('save-profile-note').onclick=async()=>{
@@ -117,6 +122,9 @@
     const client=window.qtimeAuthClient,user=window.qtimeAuthUser;if(!client||!user)return;
     const [{data,error},{data:shop}]=await Promise.all([client.rpc('qtime_public_profile',{p_user_id:user.id}),client.rpc('qtime_shop_list',{})]);if(error)return;
     $('profile-note').value=data.profile_note||'';$('my-win-count').textContent=`승리 ${data.wins||0}회`;
-    const owned=new Set((shop?.products||[]).filter(item=>Number(item.quantity)>0).map(item=>item.icon));document.querySelectorAll('#profile-icon-grid button').forEach(button=>{const free=button.dataset.free==='true',has=free||owned.has(button.dataset.icon),active=button.getAttribute('aria-pressed')==='true';button.dataset.owned=String(has);button.classList.toggle('locked',!has);const item=button.querySelector('small');if(item)item.textContent=active?'사용 중':free?'무료':has?'사용 가능':'구입 필요'});
+    const owned=new Set((shop?.products||[]).filter(item=>Number(item.quantity)>0).map(item=>item.icon));
+    const expires=shop?.profile_pass_expires_at?new Date(shop.profile_pass_expires_at):null,passActive=expires&&expires>Date.now(),isAdmin=window.qtimeAuthProfile?.role==='superadmin';
+    const passStatus=$('profile-pass-status');passStatus.hidden=!passActive;if(passActive)passStatus.textContent=`프로필 자유이용권: ${expires.toLocaleString('ko-KR')}까지`;
+    document.querySelectorAll('#profile-icon-grid button').forEach(button=>{const free=button.dataset.free==='true',adminOnly=button.dataset.admin==='true',has=adminOnly?isAdmin:free||passActive||owned.has(button.dataset.icon),active=button.getAttribute('aria-pressed')==='true';button.dataset.owned=String(has);button.hidden=!has;button.classList.remove('locked');const item=button.querySelector('small');if(item)item.textContent=active?'사용 중':adminOnly?'관리자':free?'무료':passActive?'자유이용권':'사용 가능'});
   });
 })();

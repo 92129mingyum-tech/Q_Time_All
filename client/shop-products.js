@@ -9,6 +9,7 @@ window.QTIME_SHOP_PRODUCTS = {
     { icon: '📣', name: '확성기', price: 200, description: '전체 화면에 메시지 1회 표시. 글씨 색상을 고를 수 있습니다.' },
     { icon: '💡', name: '힌트 사용권', price: 300, description: '문제를 풀 때 보기 하나를 제외하는 사용권입니다.' },
     { icon: '📊', name: '도와줘 친구들!', price: 250, description: '문제가 끝날 때까지 접속자 선택 비율을 실시간으로 보여줍니다.' },
+    { icon: '🎫', name: '프로필 자유이용권(7일)', price: 1000, description: '관리자 전용을 제외한 모든 프로필을 7일간 사용합니다.' },
     { icon: '🎟️', name: '경험치 부스터', price: 500, description: '게임 보상 경험치를 추가로 받는 사용권입니다.' },
     { icon: '🧩', name: '문제 패스권', price: 350, description: '어려운 문제를 한 번 건너뛸 수 있습니다.' },
     { icon: '🎊', name: '승리 효과', price: 450, description: '게임 종료 화면에 축하 효과를 표시합니다.' },

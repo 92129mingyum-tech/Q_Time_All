@@ -623,7 +623,7 @@
 <span class="notice-text">Q-TIME에 오신 것을 환영합니다!</span>
 </span>
 </div>
-    <div class="version">Client v0.1.24 <span id="status">업데이트 확인 중…</span>
+    <div class="version">Client v0.1.25 <span id="status">업데이트 확인 중…</span>
 </div>
   </footer>
 
@@ -685,7 +685,6 @@
 <small id="profile-character-name">강아지 프로필</small>
 </div>
 </div>
-</div>
 <div class="profile-editor">
 <label class="profile-note-label" for="profile-note">자기소개</label>
 <textarea id="profile-note" maxlength="140" rows="3" placeholder="나를 소개해 주세요">
@@ -693,6 +692,7 @@
 <button type="button" id="save-profile-note">자기소개 저장</button>
 </div>
 </div>
+<p id="profile-pass-status" class="profile-pass-status" hidden></p>
 <h3 class="profile-grid-title">프로필 선택 <small>십이지신 무료 · 구매한 프로필 사용 가능</small></h3>
 <div class="profile-icon-grid" id="profile-icon-grid" role="group" aria-label="프로필 이모티콘 목록">
 </div>
@@ -732,24 +732,23 @@
     byId('open-profile').onclick=()=>byId('profile-dialog').showModal();byId('close-profile').onclick=()=>byId('profile-dialog').close();
     const freeProfiles=['🐭','🐮','🐯','🐰','🐲','🐍','🐴','🐑','🐵','🐔','🐶','🐷'];
     const premiumProfiles=['🙂','🐱','🐸','🐼','🦊','🐻','🐧','🐹','👻','🤖','👾','😈'];
-    const zodiacProfiles=['🐭','🐮','🐯','🐰','🐲','🐍','🐴','🐑','🐵','🐔','🐶','🐷'];
-    const customProfileImages={"bear": "./assets/profiles/bear.png", "rabbit": "./assets/profiles/rabbit.png", "cat": "./assets/profiles/cat.png", "fox": "./assets/profiles/fox.png"};
-    const profileNames={bear:'헤드셋 곰',rabbit:'헤드셋 토끼',cat:'헤드셋 고양이',fox:'헤드셋 여우'};
+    const customProfileImages={bear:'./assets/profiles/bear.png',rabbit:'./assets/profiles/rabbit.png',cat:'./assets/profiles/cat.png',fox:'./assets/profiles/fox.png',admin:'./assets/profiles/admin.png'};
+    const profileNames={bear:'헤드셋 곰',rabbit:'헤드셋 토끼',cat:'헤드셋 고양이',fox:'헤드셋 여우',admin:'관리자 전용'};
     let selectedProfile='🐶';
-    const entries=[...new Set([...freeProfiles,...premiumProfiles,...zodiacProfiles])].map(icon=>({id:icon,free:freeProfiles.includes(icon)}));
-    entries.push(...Object.keys(customProfileImages).map(id=>({id:'img:'+id,free:false})));
+    const entries=[...new Set([...freeProfiles,...premiumProfiles])].map(icon=>({id:icon,free:freeProfiles.includes(icon),admin:false}));
+    entries.push(...Object.keys(customProfileImages).map(id=>({id:'img:'+id,free:false,admin:id==='admin'})));
     const grid=byId('profile-icon-grid');
-    for(const entry of entries){const button=document.createElement('button');button.type='button';button.className='profile-icon';button.dataset.icon=entry.id;button.dataset.free=String(entry.free);button.dataset.owned=String(entry.free);button.setAttribute('aria-pressed',String(entry.id===selectedProfile));button.setAttribute('aria-label',(entry.id.startsWith('img:')?profileNames[entry.id.slice(4)]:entry.id)+(entry.free?' 무료':' 유료'));let art;
+    for(const entry of entries){const button=document.createElement('button');button.type='button';button.className='profile-icon';button.dataset.icon=entry.id;button.dataset.free=String(entry.free);button.dataset.admin=String(entry.admin);button.dataset.owned=String(entry.free);button.hidden=!entry.free;button.setAttribute('aria-pressed',String(entry.id===selectedProfile));button.setAttribute('aria-label',entry.id.startsWith('img:')?profileNames[entry.id.slice(4)]:entry.id);let art;
       if(entry.id.startsWith('img:')){art=document.createElement('img');art.src=customProfileImages[entry.id.slice(4)];art.alt=''}else{art=document.createElement('span');art.textContent=entry.id}button.append(art);const tag=document.createElement('small');tag.textContent=entry.free?'무료':'상점 상품';button.append(tag);
       button.onclick=async()=>{
         if(!window.qtimeSaveProfileIcon){alert('로그인 후 변경할 수 있습니다.');return}
-        if(!entry.free&&button.dataset.owned!=='true'){alert('상점에서 먼저 구입한 프로필입니다.');return}
+        if(!entry.free&&button.dataset.owned!=='true'){return}
         try{await window.qtimeSaveProfileIcon(entry.id)}catch(error){alert('프로필 저장 실패: '+error.message);return}
         selectedProfile=entry.id;
         window.qtimeProfileIcon?.set(byId('profile-selected'),entry.id);
         window.qtimeProfileIcon?.set(document.querySelector('.header-avatar'),entry.id);
-        byId('profile-character-name').textContent=entry.id+' 프로필';
-        grid.querySelectorAll('button').forEach(el=>{el.setAttribute('aria-pressed',String(el===button));const label=el.querySelector('small');if(label)label.textContent=el===button?'사용 중':el.dataset.free==='true'?'무료':el.dataset.owned==='true'?'사용 가능':'구입 필요'});
+        byId('profile-character-name').textContent=entry.id.startsWith('img:')?profileNames[entry.id.slice(4)]:(entry.id+' 프로필');
+        grid.querySelectorAll('button').forEach(el=>{el.setAttribute('aria-pressed',String(el===button));const label=el.querySelector('small');if(label)label.textContent=el===button?'사용 중':el.dataset.admin==='true'?'관리자':el.dataset.free==='true'?'무료':'사용 가능'});
       };grid.append(button)}
     if(window.qtime?.onUpdateStatus)window.qtime.onUpdateStatus(message=>{byId('status').textContent=message});
 
@@ -787,6 +786,7 @@ async function enter(user){
  const banResult=await client.from('profiles').select('is_banned').eq('id',user.id).maybeSingle();
  data.is_banned=!banResult.error&&Boolean(banResult.data?.is_banned);
  if(data.is_banned){await client.auth.signOut();throw Error('이용이 정지된 아이디입니다. 관리자에게 문의해주세요.')}
+ window.qtimeAuthProfile=data;
  document.getElementById('open-admin-notice').hidden=data.role!=='superadmin';
  const role=data.role==='superadmin'?'최고관리자':data.role==='operator'?'운영자':'';
  document.querySelector('.user-name').textContent=(data.nickname||'도전자')+(role?' · '+role:'');const currentCard=document.querySelector('.user-card .user-info strong');if(currentCard)currentCard.textContent=(data.nickname||'도전자')+' (나)';
