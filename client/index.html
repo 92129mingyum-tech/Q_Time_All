@@ -623,7 +623,7 @@
 <span class="notice-text">Q-TIME에 오신 것을 환영합니다!</span>
 </span>
 </div>
-    <div class="version">Client v0.1.25 <span id="status">업데이트 확인 중…</span>
+    <div class="version">Client v0.1.26 <span id="status">업데이트 확인 중…</span>
 </div>
   </footer>
 
@@ -676,7 +676,8 @@
 <button type="button" id="close-profile">닫기</button>
 </div>
 <div class="profile-body">
-<div class="profile-summary">
+<section class="profile-summary" aria-label="현재 프로필">
+<span class="profile-section-label">CURRENT PROFILE</span>
 <div class="profile-character profile-symbol" id="profile-selected">🐶</div>
 <div class="profile-facts">
 <strong>동동</strong>
@@ -684,16 +685,18 @@
 <span id="my-win-count">승리 0회</span>
 <small id="profile-character-name">강아지 프로필</small>
 </div>
-</div>
-<div class="profile-editor">
+</section>
+<section class="profile-editor" aria-label="자기소개 편집">
+<span class="profile-section-label">ABOUT ME</span>
 <label class="profile-note-label" for="profile-note">자기소개</label>
 <textarea id="profile-note" maxlength="140" rows="3" placeholder="나를 소개해 주세요">
 </textarea>
+<small class="profile-note-help">최대 140자 · 프로필을 보는 이용자에게 표시됩니다.</small>
 <button type="button" id="save-profile-note">자기소개 저장</button>
-</div>
+</section>
 </div>
 <p id="profile-pass-status" class="profile-pass-status" hidden></p>
-<h3 class="profile-grid-title">프로필 선택 <small>십이지신 무료 · 구매한 프로필 사용 가능</small></h3>
+<h3 class="profile-grid-title"><span>프로필 선택</span><small>십이지신 무료 · 나머지는 자유이용권으로 모두 사용</small></h3>
 <div class="profile-icon-grid" id="profile-icon-grid" role="group" aria-label="프로필 이모티콘 목록">
 </div>
 <p class="profile-hint">게임 캐릭터와 별개로 표시되는 프로필 이미지입니다.</p>
@@ -728,7 +731,7 @@
   <script>
     const byId = id => document.getElementById(id);
     // Visual lobby handlers are installed by visual-lobby.js.
-    document.querySelectorAll('[data-pending="빠른대전"]').forEach(button=>button.addEventListener('click',()=>alert(button.dataset.pending+' 기능을 준비 중입니다.')));
+    document.querySelectorAll('[data-pending="빠른대전"]').forEach(button=>button.addEventListener('click',()=>window.qtimeDialog.alert(button.dataset.pending+' 기능을 준비 중입니다.',{title:'Q-TIME 안내'})));
     byId('open-profile').onclick=()=>byId('profile-dialog').showModal();byId('close-profile').onclick=()=>byId('profile-dialog').close();
     const freeProfiles=['🐭','🐮','🐯','🐰','🐲','🐍','🐴','🐑','🐵','🐔','🐶','🐷'];
     const premiumProfiles=['🙂','🐱','🐸','🐼','🦊','🐻','🐧','🐹','👻','🤖','👾','😈'];
@@ -741,9 +744,9 @@
     for(const entry of entries){const button=document.createElement('button');button.type='button';button.className='profile-icon';button.dataset.icon=entry.id;button.dataset.free=String(entry.free);button.dataset.admin=String(entry.admin);button.dataset.owned=String(entry.free);button.hidden=!entry.free;button.setAttribute('aria-pressed',String(entry.id===selectedProfile));button.setAttribute('aria-label',entry.id.startsWith('img:')?profileNames[entry.id.slice(4)]:entry.id);let art;
       if(entry.id.startsWith('img:')){art=document.createElement('img');art.src=customProfileImages[entry.id.slice(4)];art.alt=''}else{art=document.createElement('span');art.textContent=entry.id}button.append(art);const tag=document.createElement('small');tag.textContent=entry.free?'무료':'상점 상품';button.append(tag);
       button.onclick=async()=>{
-        if(!window.qtimeSaveProfileIcon){alert('로그인 후 변경할 수 있습니다.');return}
+        if(!window.qtimeSaveProfileIcon){await window.qtimeDialog.alert('로그인 후 변경할 수 있습니다.',{title:'프로필'});return}
         if(!entry.free&&button.dataset.owned!=='true'){return}
-        try{await window.qtimeSaveProfileIcon(entry.id)}catch(error){alert('프로필 저장 실패: '+error.message);return}
+        try{await window.qtimeSaveProfileIcon(entry.id)}catch(error){await window.qtimeDialog.alert('프로필 저장 실패: '+error.message,{title:'프로필 저장 오류',type:'error'});return}
         selectedProfile=entry.id;
         window.qtimeProfileIcon?.set(byId('profile-selected'),entry.id);
         window.qtimeProfileIcon?.set(document.querySelector('.header-avatar'),entry.id);

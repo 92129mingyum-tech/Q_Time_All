@@ -178,20 +178,20 @@
     try{await rpc('qtime_room_transfer_host',{p_room_id:roomId,p_target_id:target});await refreshRoom()}
     catch(error){notice('방장 위임 실패: '+errorText(error),{title:'위임 오류',type:'error'})}
   }
-  async function setTeam(team){if(!roomId)return;try{await rpc('qtime_team_select',{p_room_id:roomId,p_team:team});await refreshRoom()}catch(error){alert('팀 선택 실패: '+errorText(error))}}
-  async function addTeamCpu(team){if(!roomId)return;try{await rpc('qtime_team_cpu_add',{p_room_id:roomId,p_team:team});await refreshRoom()}catch(error){alert('CPU 추가 실패: '+errorText(error))}}
-  async function useHalfHint(data){if(!roomId)return;try{const result=await rpc('qtime_half_hint_use',{p_room_id:roomId,p_round:data.round});frame()?.qtimeRoomBridge?.halfHintUpdate(result)}catch(error){alert('반반 힌트 사용 실패: '+errorText(error))}}
+  async function setTeam(team){if(!roomId)return;try{await rpc('qtime_team_select',{p_room_id:roomId,p_team:team});await refreshRoom()}catch(error){notice('팀 선택 실패: '+errorText(error),{title:'팀 선택 오류',type:'error'})}}
+  async function addTeamCpu(team){if(!roomId)return;try{await rpc('qtime_team_cpu_add',{p_room_id:roomId,p_team:team});await refreshRoom()}catch(error){notice('CPU 추가 실패: '+errorText(error),{title:'CPU 추가 오류',type:'error'})}}
+  async function useHalfHint(data){if(!roomId)return;try{const result=await rpc('qtime_half_hint_use',{p_room_id:roomId,p_round:data.round});frame()?.qtimeRoomBridge?.halfHintUpdate(result)}catch(error){notice('반반 힌트 사용 실패: '+errorText(error),{title:'아이템 사용 오류',type:'error'})}}
   async function useAudience(data){if(!roomId)return;try{audienceRound=Number(data.round);const result=await rpc('qtime_audience_use',{p_room_id:roomId,p_round:audienceRound});frame()?.qtimeRoomBridge?.audienceUpdate(result)}catch(error){audienceRound=0;notice('도와줘 친구들 사용 실패: '+errorText(error),{title:'아이템 사용 오류',type:'error'})}}
   function openRoomMenu(menu){const targets={profile:'#open-profile',ranking:'[data-pending="랭킹"]',settings:'[data-pending="설정"]'};if(menu==='shop'){window.qtimeShowFeature('./shop.html','Q-TIME 상점');return}document.querySelector(targets[menu])?.click()}
   async function closeRoom(leave=true){
     const id=roomId;roomId=null;room=match=null;clearInterval(roomPoll);roomPoll=null;
-    if(leave&&id&&client){try{await rpc('qtime_room_leave',{p_room_id:id})}catch(error){alert('방 나가기 실패: '+errorText(error));roomId=id;roomPoll=setInterval(refreshRoom,650);return}}
+    if(leave&&id&&client){try{await rpc('qtime_room_leave',{p_room_id:id})}catch(error){notice('방 나가기 실패: '+errorText(error),{title:'방 나가기 오류',type:'error'});roomId=id;roomPoll=setInterval(refreshRoom,650);return}}
     showingShout=false;document.querySelectorAll('.qtime-shout-notice').forEach(node=>node.remove());window.qtimeCloseFeature();await refreshRooms();nextShout();
   }
   async function setReady(value){
     if(!roomId)return;
     try{await rpc('qtime_room_ready',{p_room_id:roomId,p_ready:value});await refreshRoom()}
-    catch(error){alert('준비 변경 실패: '+errorText(error))}
+    catch(error){notice('준비 변경 실패: '+errorText(error),{title:'준비 상태 오류',type:'error'})}
   }
   async function sendRoomMessage(text){
     if(!roomId)return;
@@ -204,7 +204,7 @@
       if(input)delete input.dataset.targetUserId;
       await refreshRoom();
     }
-    catch(error){alert('방 채팅 실패: '+errorText(error))}
+    catch(error){notice('방 채팅 실패: '+errorText(error),{title:'채팅 오류',type:'error'})}
   }
   function ensureInviteDialog(){
     let dialog=$('invite-dialog');if(dialog)return dialog;
@@ -259,7 +259,7 @@
       $('profile-whisper').hidden=id===user.id;
       $('profile-friend').hidden=id===user.id;
       $('public-profile-dialog').showModal();
-    }catch(error){alert('프로필 열기 실패: '+errorText(error))}
+    }catch(error){notice('프로필 열기 실패: '+errorText(error),{title:'프로필 오류',type:'error'})}
   }
   function prepareWhisper(){
     if(!selectedProfile)return;
@@ -324,7 +324,7 @@
   async function start(){
     if(!roomId)return;
     try{await rpc('qtime_match_start_v2',{p_room_id:roomId});await refreshRoom()}
-    catch(error){alert('게임 시작 실패: '+errorText(error))}
+    catch(error){notice('게임 시작 실패: '+errorText(error),{title:'게임 시작 오류',type:'error'})}
   }
   async function answer(data){
     if(!roomId)return;
@@ -352,8 +352,8 @@
   $('profile-whisper').onclick=prepareWhisper;
   $('profile-friend').onclick=async()=>{
     if(!selectedProfile||!client)return;
-    try{await rpc('qtime_friend_request',{p_user_id:selectedProfile.id});$('public-profile-dialog').close();alert('친구 요청을 보냈습니다.')}
-    catch(error){alert('친구 요청 실패: '+errorText(error))}
+    try{await rpc('qtime_friend_request',{p_user_id:selectedProfile.id});$('public-profile-dialog').close();notice('친구 요청을 보냈습니다.',{title:'친구 요청',type:'success'})}
+    catch(error){notice('친구 요청 실패: '+errorText(error),{title:'친구 요청 오류',type:'error'})}
   };
   window.qtimeChatCommands?.attach($('chat-input'));
   $('chat-form').onsubmit=async event=>{
@@ -364,7 +364,7 @@
       else await rpc('qtime_channel_send',{p_channel:channels[channel],p_message:window.qtimeChatCommands.expand(value)});
       input.value='';delete input.dataset.targetUserId;await refreshChannel();
     }
-    catch(error){alert('채널 채팅 실패: '+errorText(error))}
+    catch(error){notice('채널 채팅 실패: '+errorText(error),{title:'채팅 오류',type:'error'})}
   };
   // The iframe is same-origin. Do not leave a room by merely closing its dialog.
   $('feature-close').onclick=()=>roomId?closeRoom(true):window.qtimeCloseFeature();

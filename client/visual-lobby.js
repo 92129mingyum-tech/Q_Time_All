@@ -13,8 +13,8 @@
   $('shout-form').onsubmit = async event => {
     event.preventDefault();const input=$('shout-input'),message=input.value.trim();
     if(!message)return;
-    if(!window.qtimeShoutSend){alert('로그인 후 확성기를 사용할 수 있습니다.');return}
+    if(!window.qtimeShoutSend){await window.qtimeDialog.alert('로그인 후 확성기를 사용할 수 있습니다.',{title:'확성기'});return}
     try{await window.qtimeShoutSend(message,color);input.value='';input.placeholder='확성기 전송 완료';setTimeout(()=>{input.placeholder='전체 화면에 보낼 메시지'},3000)}
-    catch(error){alert('확성기 전송 실패: '+String(error.message||error))}
+    catch(error){await window.qtimeDialog.alert('확성기 전송 실패: '+String(error.message||error),{title:'확성기 전송 오류',type:'error'})}
   };
 })();
